@@ -25,7 +25,7 @@ $ terraform init
 
 2. Create a workspace. Corresponding workspace keys need to be updated in `workspace_iam_roles` in [variables.tf](variables.tf)
 
-Due to the `assume_role` setting in the AWS provider configuration, any management operations for AWS resources will be performed via the configured role in the appropriate environment AWS account. The backend operations, such as reading and writing the state from S3, will be performed directly as the administrator's own user within the administrative account.
+> Due to the `assume_role` setting in the AWS provider configuration, any management operations for AWS resources will be performed via the configured role in the appropriate environment AWS account. The backend operations, such as reading and writing the state from S3, will be performed directly as the administrator's own user within the administrative account.
 
 ```
 $ terraform workspace new <NAMESPACE>
