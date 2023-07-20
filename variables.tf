@@ -10,6 +10,12 @@ variable "environment" {
   default     = "prod"
 }
 
+variable "domain_name" {
+  description = "The root domain name"
+  type        = string
+  default     = "avm.technology"
+}
+
 variable "workspace_iam_roles" {
   default = {
     mcro = "arn:aws:iam::670255240370:role/AVMAdminRole"
