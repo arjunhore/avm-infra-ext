@@ -23,8 +23,8 @@ resource "aws_ecs_task_definition" "this" {
   family                   = local.namespace
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 512
-  memory                   = 1024
+  cpu                      = 1024
+  memory                   = 2048
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
@@ -33,8 +33,8 @@ resource "aws_ecs_task_definition" "this" {
       {
         name : local.namespace,
         image : var.ecr_repository_image,
-        cpu : 512,
-        memory : 1024,
+        cpu : 1024,
+        memory : 2048,
         logConfiguration : {
           "logDriver" : "awslogs",
           "options" : {
@@ -223,7 +223,7 @@ resource "aws_secretsmanager_secret" "this" {
 }
 
 resource "aws_cloudwatch_log_group" "this" {
-  name_prefix       = "${local.namespace}-"
+  name              = local.namespace
   retention_in_days = 90
 }
 
