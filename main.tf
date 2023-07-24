@@ -7,12 +7,11 @@ provider "aws" {
 }
 
 locals {
-  region               = var.region
-  namespace            = "avm-${terraform.workspace}-${var.environment}"
-  environment          = var.environment
-  domain_name          = "${terraform.workspace}.${var.domain_name}"
-  account_id           = data.aws_caller_identity.current.account_id
-  ecr_repository_image = "${var.ecr_repository}/1.0.0"
+  region      = var.region
+  namespace   = "avm-${terraform.workspace}-${var.environment}"
+  environment = var.environment
+  domain_name = "${terraform.workspace}.${var.domain_name}"
+  account_id  = data.aws_caller_identity.current.account_id
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -220,7 +219,7 @@ module "server" {
   region                          = local.region
   environment                     = local.environment
   namespace                       = local.namespace
-  ecr_repository_image            = local.ecr_repository_image
+  ecr_repository_image            = var.ecr_repository_image
   vpc_id                          = module.vpc.vpc_id
   ecs_cluster_id                  = module.ecs.cluster_id
   ecs_cluster_name                = module.ecs.cluster_name
