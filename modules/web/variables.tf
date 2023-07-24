@@ -7,3 +7,8 @@ variable "environment" {
   description = "Environment used for creating resources (will be appended to various resources)"
   type        = string
 }
+
+variable "namespace" {
+  description = "Namespace (up to 255 letters, numbers, hyphens, and underscores)"
+  type        = string
+}

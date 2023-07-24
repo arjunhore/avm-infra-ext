@@ -16,6 +16,12 @@ variable "domain_name" {
   default     = "avm.technology"
 }
 
+variable "ecr_repository" {
+  description = "The ECR repository URI for the server image"
+  type        = string
+  default     = "309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-server"
+}
+
 variable "workspace_iam_roles" {
   default = {
     mcro = "arn:aws:iam::670255240370:role/AVMAdminRole"

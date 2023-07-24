@@ -7,11 +7,12 @@ provider "aws" {
 }
 
 locals {
-  region      = var.region
-  namespace   = "avm-${terraform.workspace}-${var.environment}"
-  environment = var.environment
-  domain_name = "${terraform.workspace}.${var.domain_name}"
-  account_id  = data.aws_caller_identity.current.account_id
+  region               = var.region
+  namespace            = "avm-${terraform.workspace}-${var.environment}"
+  environment          = var.environment
+  domain_name          = "${terraform.workspace}.${var.domain_name}"
+  account_id           = data.aws_caller_identity.current.account_id
+  ecr_repository_image = "${var.ecr_repository}/1.0.0"
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -129,6 +130,22 @@ module "alb" {
   tags = local.tags
 }
 
+resource "aws_alb_listener_rule" "this" {
+  listener_arn = tolist(module.alb.https_listener_arns)[0]
+  priority     = 1
+
+  action {
+    type             = "forward"
+    target_group_arn = module.server.target_group_arn
+  }
+
+  condition {
+    host_header {
+      values = ["api.${local.domain_name}"]
+    }
+  }
+}
+
 module "security_group" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.1"
@@ -200,8 +217,14 @@ resource "aws_route53_record" "route53_wildcard_record" {
 module "server" {
   source = "./modules/server"
 
-  region      = local.region
-  environment = local.environment
+  region                          = local.region
+  environment                     = local.environment
+  namespace                       = local.namespace
+  ecr_repository_image            = local.ecr_repository_image
+  vpc_id                          = module.vpc.vpc_id
+  ecs_cluster_id                  = module.ecs.cluster_id
+  ecs_cluster_name                = module.ecs.cluster_name
+  load_balancer_security_group_id = module.security_group.security_group_id
 }
 
 ################################################################################
@@ -213,4 +236,5 @@ module "web" {
 
   region      = local.region
   environment = local.environment
+  namespace   = local.namespace
 }
