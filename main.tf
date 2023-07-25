@@ -232,18 +232,6 @@ resource "aws_route53_zone" "this" {
   tags = local.tags
 }
 
-resource "aws_route53_record" "route53_root_record" {
-  zone_id = aws_route53_zone.this.zone_id
-  name    = local.domain_name
-  type    = "A"
-
-  alias {
-    evaluate_target_health = false
-    name                   = module.alb.lb_dns_name
-    zone_id                = module.alb.lb_zone_id
-  }
-}
-
 resource "aws_route53_record" "route53_wildcard_record" {
   zone_id = aws_route53_zone.this.zone_id
   name    = "*.${local.domain_name}"

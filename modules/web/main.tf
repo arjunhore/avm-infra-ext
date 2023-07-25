@@ -119,7 +119,7 @@ module "cdn" {
 resource "aws_route53_record" "route53_wildcard_record" {
   zone_id = data.aws_route53_zone.this.id
   name    = local.domain_name
-  type    = "CNAME"
+  type    = "A"
 
   alias {
     evaluate_target_health = false
