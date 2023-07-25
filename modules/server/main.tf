@@ -1,9 +1,12 @@
 locals {
-  environment = var.environment
-  namespace   = "${var.namespace}-server"
+  environment      = var.environment
+  namespace        = var.namespace
+  server_namespace = "${var.namespace}-server"
+  domain_name      = var.domain_name
+  certificate_arn  = var.certificate_arn
 
   tags = {
-    Name        = local.namespace
+    Name        = local.server_namespace
     Environment = var.environment
   }
 }
@@ -15,12 +18,16 @@ data "aws_subnets" "all" {
   }
 }
 
+data "aws_route53_zone" "this" {
+  name = local.domain_name
+}
+
 ################################################################################
 # ECS Resources
 ################################################################################
 
 resource "aws_ecs_task_definition" "this" {
-  family                   = local.namespace
+  family                   = local.server_namespace
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = 1024
@@ -31,7 +38,7 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = jsonencode(
     [
       {
-        name : local.namespace,
+        name : local.server_namespace,
         image : var.ecr_repository_image,
         cpu : 1024,
         memory : 2048,
@@ -65,7 +72,7 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 resource "aws_ecs_service" "this" {
-  name                               = local.namespace
+  name                               = local.server_namespace
   cluster                            = var.ecs_cluster_id
   task_definition                    = aws_ecs_task_definition.this.arn
   desired_count                      = 1
@@ -81,13 +88,13 @@ resource "aws_ecs_service" "this" {
 
   load_balancer {
     target_group_arn = aws_alb_target_group.this.arn
-    container_name   = local.namespace
+    container_name   = local.server_namespace
     container_port   = var.docker_container_port
   }
 }
 
 resource "aws_alb_target_group" "this" {
-  name                 = "${local.namespace}-tg"
+  name                 = "${local.server_namespace}-tg"
   port                 = var.docker_container_port
   protocol             = "HTTP"
   vpc_id               = var.vpc_id
@@ -107,7 +114,7 @@ resource "aws_alb_target_group" "this" {
 }
 
 resource "aws_security_group" "ecs_service_security_group" {
-  name        = "${local.namespace}-ecs-sg"
+  name        = "${local.server_namespace}-ecs-sg"
   description = "Allow all inbound traffic on the container listener port"
   vpc_id      = var.vpc_id
 
@@ -139,7 +146,7 @@ resource "aws_appautoscaling_target" "this" {
 }
 
 resource "aws_appautoscaling_policy" "autoscaling_up_policy" {
-  name               = "${local.namespace}-scale-up-policy"
+  name               = "${local.server_namespace}-scale-up-policy"
   depends_on         = [aws_appautoscaling_target.this]
   service_namespace  = aws_appautoscaling_target.this.service_namespace
   resource_id        = aws_appautoscaling_target.this.resource_id
@@ -158,7 +165,7 @@ resource "aws_appautoscaling_policy" "autoscaling_up_policy" {
 }
 
 resource "aws_appautoscaling_policy" "autoscaling_down_policy" {
-  name               = "${local.namespace}-scale-down-policy"
+  name               = "${local.server_namespace}-scale-down-policy"
   depends_on         = [aws_appautoscaling_target.this]
   service_namespace  = aws_appautoscaling_target.this.service_namespace
   resource_id        = aws_appautoscaling_target.this.resource_id
@@ -177,7 +184,7 @@ resource "aws_appautoscaling_policy" "autoscaling_down_policy" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
-  alarm_name          = "${local.namespace}-cpu-usage-high-${var.autoscaling_cpu_high_threshold}"
+  alarm_name          = "${local.server_namespace}-cpu-usage-high-${var.autoscaling_cpu_high_threshold}"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "CPUUtilization"
@@ -196,7 +203,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
-  alarm_name          = "${local.namespace}-cpu-usage-low-${var.autoscaling_cpu_low_threshold}"
+  alarm_name          = "${local.server_namespace}-cpu-usage-low-${var.autoscaling_cpu_low_threshold}"
   comparison_operator = "LessThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "CPUUtilization"
@@ -215,20 +222,121 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
 }
 
 ################################################################################
+# S3
+################################################################################
+
+resource "aws_s3_bucket" "aws_s3_bucket_documents" {
+  bucket = "${var.namespace}-documents"
+}
+
+resource "aws_s3_bucket" "aws_s3_bucket_assets" {
+  bucket = "${var.namespace}-assets"
+}
+
+resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {
+  bucket = aws_s3_bucket.aws_s3_bucket_assets.id
+  policy = jsonencode(
+    {
+      "Version" : "2008-10-17",
+      "Statement" : [
+        {
+          "Effect" : "Allow",
+          "Principal" : {
+            "Service" : "cloudfront.amazonaws.com"
+          },
+          "Action" : "s3:GetObject",
+          "Resource" : "${aws_s3_bucket.aws_s3_bucket_assets.arn}/*",
+          "Condition" : {
+            "StringEquals" : {
+              "AWS:SourceArn" : module.cdn.cloudfront_distribution_arn
+            }
+          }
+        }
+      ]
+    }
+  )
+}
+
+resource "aws_s3_bucket_cors_configuration" "aws_s3_bucket_docs_cors" {
+  bucket = aws_s3_bucket.aws_s3_bucket_assets.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]
+    allowed_origins = ["*"]
+    expose_headers  = []
+    max_age_seconds = 3000
+  }
+
+  cors_rule {
+    allowed_methods = ["GET"]
+    allowed_origins = ["*"]
+  }
+}
+
+################################################################################
+# CloudFront
+################################################################################
+
+module "cdn" {
+  source  = "terraform-aws-modules/cloudfront/aws"
+  version = "~> 3.2.1"
+
+  aliases = ["assets.${local.domain_name}"]
+
+  enabled         = true
+  is_ipv6_enabled = true
+  price_class     = "PriceClass_All"
+
+  create_origin_access_control = true
+  origin_access_control        = {
+    assets_s3_oac = {
+      description      = "CloudFront access for S3"
+      origin_type      = "s3"
+      signing_behavior = "always"
+      signing_protocol = "sigv4"
+    }
+  }
+
+  origin = {
+    assets_s3 = {
+      domain_name           = aws_s3_bucket.aws_s3_bucket_assets.bucket_regional_domain_name
+      origin_access_control = "assets_s3_oac" # key in `origin_access_control`
+    }
+  }
+
+  default_cache_behavior = {
+    target_origin_id       = "assets_s3"
+    viewer_protocol_policy = "allow-all"
+
+    allowed_methods = ["GET", "HEAD", "OPTIONS"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+    query_string    = false
+  }
+
+  viewer_certificate = {
+    acm_certificate_arn      = local.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+}
+
+################################################################################
 # Supporting Resources
 ################################################################################
 
 resource "aws_secretsmanager_secret" "this" {
-  name = local.namespace
+  name = local.server_namespace
 }
 
 resource "aws_cloudwatch_log_group" "this" {
-  name              = local.namespace
+  name              = local.server_namespace
   retention_in_days = 90
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${local.namespace}-ecsTaskExecutionRole"
+  name = "${local.server_namespace}-ecsTaskExecutionRole"
 
   assume_role_policy = jsonencode(
     {
@@ -246,7 +354,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 }
 
 resource "aws_iam_role" "ecs_task_role" {
-  name = "${local.namespace}-ecsTaskRole"
+  name = "${local.server_namespace}-ecsTaskRole"
 
   assume_role_policy = jsonencode(
     {
@@ -264,7 +372,7 @@ resource "aws_iam_role" "ecs_task_role" {
 }
 
 resource "aws_iam_policy" "aws_iam_policy_secrets_manager" {
-  name        = "${local.namespace}-secrets-manager-policy"
+  name        = "${local.server_namespace}-secrets-manager-policy"
   description = "Access control for Secrets Manager"
 
   policy = jsonencode(
@@ -305,4 +413,13 @@ resource "aws_iam_role_policy_attachment" "secrets_manager_ecs_task_policy_attac
 resource "aws_iam_role_policy_attachment" "secrets_manager_ecs_task_execution_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = aws_iam_policy.aws_iam_policy_secrets_manager.arn
+}
+
+resource "aws_route53_record" "this" {
+  zone_id = data.aws_route53_zone.this.id
+  name    = "assets.${local.domain_name}"
+  type    = "CNAME"
+  ttl     = 300
+
+  records = [module.cdn.cloudfront_distribution_domain_name]
 }

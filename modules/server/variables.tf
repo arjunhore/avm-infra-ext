@@ -13,6 +13,16 @@ variable "namespace" {
   type        = string
 }
 
+variable "domain_name" {
+  description = "The domain name"
+  type        = string
+}
+
+variable "certificate_arn" {
+  description = "The domain certificate ARN"
+  type        = string
+}
+
 variable "vpc_id" {
   description = "The VPC ID"
   type        = string

@@ -12,3 +12,13 @@ variable "namespace" {
   description = "Namespace (up to 255 letters, numbers, hyphens, and underscores)"
   type        = string
 }
+
+variable "domain_name" {
+  description = "The domain name"
+  type        = string
+}
+
+variable "certificate_arn" {
+  description = "The domain certificate ARN"
+  type        = string
+}

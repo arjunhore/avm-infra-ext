@@ -37,9 +37,10 @@ module "vpc" {
   name = "${local.namespace}-vpc"
   cidr = local.vpc_cidr
 
-  azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 4)]
+  azs              = local.azs
+  private_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
+  public_subnets   = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 4)]
+  database_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 8)]
 
   enable_nat_gateway = true
   single_nat_gateway = true
@@ -161,8 +162,54 @@ module "security_group" {
 }
 
 ################################################################################
+# RDS Module
+################################################################################
+
+module "cluster" {
+  source = "terraform-aws-modules/rds-aurora/aws"
+
+  name              = "${local.namespace}-cluster"
+  engine            = "aurora-postgresql"
+  engine_mode       = "provisioned"
+  engine_version    = "15.3"
+  storage_encrypted = true
+
+  master_username = "avm"
+  master_password = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
+
+  vpc_id                 = module.vpc.vpc_id
+  subnets                = module.vpc.database_subnets
+  create_db_subnet_group = true
+  create_security_group  = true
+  monitoring_interval    = 60
+
+  apply_immediately   = true
+  skip_final_snapshot = true
+
+  serverlessv2_scaling_configuration = {
+    min_capacity = 0.5
+    max_capacity = 32
+  }
+
+  instance_class = "db.serverless"
+  instances      = {
+    1 = {
+      identifier = "${local.namespace}-instance-1"
+    }
+  }
+
+  tags = local.tags
+}
+
+################################################################################
 # Supporting Resources
 ################################################################################
+
+resource "random_password" "password" {
+  count   = var.rds_master_password != "" ? 0 : 1
+  length  = 20
+  special = false
+}
 
 module "acm_wildcard_cert" {
   source  = "terraform-aws-modules/acm/aws"
@@ -219,6 +266,8 @@ module "server" {
   region                          = local.region
   environment                     = local.environment
   namespace                       = local.namespace
+  domain_name                     = local.domain_name
+  certificate_arn                 = module.acm_wildcard_cert.acm_certificate_arn
   ecr_repository_image            = var.ecr_repository_image
   vpc_id                          = module.vpc.vpc_id
   ecs_cluster_id                  = module.ecs.cluster_id
@@ -233,7 +282,9 @@ module "server" {
 module "web" {
   source = "./modules/web"
 
-  region      = local.region
-  environment = local.environment
-  namespace   = local.namespace
+  region          = local.region
+  environment     = local.environment
+  namespace       = local.namespace
+  domain_name     = local.domain_name
+  certificate_arn = module.acm_wildcard_cert.acm_certificate_arn
 }

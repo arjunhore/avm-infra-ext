@@ -22,6 +22,12 @@ variable "ecr_repository_image" {
   default     = "309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-server:1.0.0"
 }
 
+variable "rds_master_password" {
+  type        = string
+  description = "The master password for the RDS instance"
+  default     = "YpRPU*38N13K6z9ik163&8Tp*"
+}
+
 variable "workspace_iam_roles" {
   default = {
     mcro = "arn:aws:iam::670255240370:role/AVMAdminRole"
