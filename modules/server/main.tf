@@ -57,6 +57,12 @@ resource "aws_ecs_task_definition" "this" {
             hostPort : var.docker_container_port
           }
         ]
+        environmentFiles : [
+          {
+            "value" : "${aws_s3_bucket.aws_s3_bucket_envs.arn}/server.env",
+            "type" : "s3"
+          }
+        ],
         environment = [
           {
             "name" : "AWS_REGION",
@@ -224,6 +230,10 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
 ################################################################################
 # S3
 ################################################################################
+
+resource "aws_s3_bucket" "aws_s3_bucket_envs" {
+  bucket = "${var.namespace}-envs"
+}
 
 resource "aws_s3_bucket" "aws_s3_bucket_documents" {
   bucket = "${var.namespace}-documents"
@@ -395,13 +405,30 @@ resource "aws_iam_policy" "aws_iam_policy_secrets_manager" {
     })
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_role_policy_attachment" {
-  role       = aws_iam_role.ecs_task_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+resource "aws_iam_policy" "aws_iam_policy_s3" {
+  name        = "${local.namespace}-s3-policy"
+  description = "Access control for S3 resources"
+
+  policy = jsonencode(
+    {
+      "Version" : "2012-10-17",
+      "Statement" : [
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "s3:*"
+          ],
+          "Resource" : [
+            "arn:aws:s3:::${local.namespace}-*",
+            "arn:aws:s3:::${local.namespace}-*/*",
+          ]
+        },
+      ]
+    })
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy_attachment" {
-  role       = aws_iam_role.ecs_task_execution_role.name
+resource "aws_iam_role_policy_attachment" "ecs_task_role_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
@@ -413,6 +440,26 @@ resource "aws_iam_role_policy_attachment" "secrets_manager_ecs_task_policy_attac
 resource "aws_iam_role_policy_attachment" "secrets_manager_ecs_task_execution_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = aws_iam_policy.aws_iam_policy_secrets_manager.arn
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "comprehend_ecs_task_execution_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/ComprehendFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "ses_ecs_task_execution_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "s3_ecs_task_execution_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.aws_iam_policy_s3.arn
 }
 
 resource "aws_route53_record" "this" {
