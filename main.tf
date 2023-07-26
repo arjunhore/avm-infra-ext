@@ -177,8 +177,8 @@ module "cluster" {
 
   port            = var.rds_port
   database_name   = var.rds_database_name
-  master_username = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
-  master_password = var.rds_master_password
+  master_username = var.rds_master_username
+  master_password = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
 
   vpc_id                 = module.vpc.vpc_id
   vpc_security_group_ids = [module.security_group_rds.security_group_id]
