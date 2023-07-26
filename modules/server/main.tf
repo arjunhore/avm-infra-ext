@@ -131,6 +131,13 @@ resource "aws_security_group" "ecs_service_security_group" {
     security_groups = [var.load_balancer_security_group_id]
   }
 
+  ingress {
+    protocol        = "tcp"
+    from_port       = var.rds_port
+    to_port         = var.rds_port
+    security_groups = [var.rds_security_group_id]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -455,6 +462,11 @@ resource "aws_iam_role_policy_attachment" "comprehend_ecs_task_execution_policy_
 resource "aws_iam_role_policy_attachment" "ses_ecs_task_execution_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "s3_ecs_task_role_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.aws_iam_policy_s3.arn
 }
 
 resource "aws_iam_role_policy_attachment" "s3_ecs_task_execution_policy_attachment" {

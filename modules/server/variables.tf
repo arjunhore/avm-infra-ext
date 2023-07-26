@@ -43,6 +43,16 @@ variable "load_balancer_security_group_id" {
   type        = string
 }
 
+variable "rds_security_group_id" {
+  description = "The RDS security group ID"
+  type        = string
+}
+
+variable "rds_port" {
+  type        = number
+  description = "The RDS instance port"
+}
+
 variable "ecr_repository_image" {
   description = "The ECR repository image URI"
   type        = string

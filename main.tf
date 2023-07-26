@@ -96,9 +96,10 @@ module "alb" {
 
   load_balancer_type = "application"
 
-  vpc_id          = module.vpc.vpc_id
-  subnets         = module.vpc.public_subnets
-  security_groups = [module.security_group.security_group_id]
+  vpc_id                = module.vpc.vpc_id
+  subnets               = module.vpc.public_subnets
+  security_groups       = [module.security_group_alb.security_group_id]
+  create_security_group = false
 
   http_tcp_listeners = [
     {
@@ -146,11 +147,11 @@ resource "aws_alb_listener_rule" "this" {
   }
 }
 
-module "security_group" {
+module "security_group_alb" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.1"
 
-  name        = "${local.namespace}-alb-security-group"
+  name        = "${local.namespace}-alb-sg"
   description = "Allow all inbound traffic on the load balancer listener port"
   vpc_id      = module.vpc.vpc_id
 
@@ -174,20 +175,22 @@ module "cluster" {
   engine_version    = "15.3"
   storage_encrypted = true
 
-  master_username = "avm"
-  master_password = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
+  port            = var.rds_port
+  database_name   = var.rds_database_name
+  master_username = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
+  master_password = var.rds_master_password
 
   vpc_id                 = module.vpc.vpc_id
-  subnets                = module.vpc.database_subnets
-  create_db_subnet_group = true
-  create_security_group  = true
-  monitoring_interval    = 60
+  vpc_security_group_ids = [module.security_group_rds.security_group_id]
+  db_subnet_group_name   = module.vpc.database_subnet_group_name
+  create_security_group  = false
 
   apply_immediately   = true
   skip_final_snapshot = true
+  monitoring_interval = 60
 
   serverlessv2_scaling_configuration = {
-    min_capacity = 0.5
+    min_capacity = 1
     max_capacity = 32
   }
 
@@ -197,6 +200,28 @@ module "cluster" {
       identifier = "${local.namespace}-instance-1"
     }
   }
+
+  tags = local.tags
+}
+
+module "security_group_rds" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 5.1"
+
+  name        = "${local.namespace}-rds-sg"
+  description = "Control traffic to/from RDS instances"
+  vpc_id      = module.vpc.vpc_id
+
+  # ingress
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = var.rds_port
+      to_port     = var.rds_port
+      protocol    = "tcp"
+      description = "Allow inbound traffic from existing Security Groups"
+      cidr_blocks = module.vpc.vpc_cidr_block
+    }
+  ]
 
   tags = local.tags
 }
@@ -260,7 +285,9 @@ module "server" {
   vpc_id                          = module.vpc.vpc_id
   ecs_cluster_id                  = module.ecs.cluster_id
   ecs_cluster_name                = module.ecs.cluster_name
-  load_balancer_security_group_id = module.security_group.security_group_id
+  load_balancer_security_group_id = module.security_group_alb.security_group_id
+  rds_security_group_id           = module.security_group_rds.security_group_id
+  rds_port                        = var.rds_port
 }
 
 ################################################################################
