@@ -50,5 +50,6 @@ variable "workspace_iam_roles" {
   default = {
     mcro        = "arn:aws:iam::670255240370:role/AVMAdminRole"
     renaissance = "arn:aws:iam::624134621134:role/AVMAdminRole"
+    demo        = "arn:aws:iam::725002219993:role/AVMAdminRole"
   }
 }
