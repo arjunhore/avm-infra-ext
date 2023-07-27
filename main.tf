@@ -290,6 +290,7 @@ module "server" {
   load_balancer_security_group_id = module.security_group_alb.security_group_id
   rds_security_group_id           = module.security_group_rds.security_group_id
   rds_port                        = var.rds_port
+  route53_zone_id                 = aws_route53_zone.this.zone_id
 }
 
 ################################################################################
@@ -304,4 +305,5 @@ module "web" {
   namespace       = local.namespace
   domain_name     = local.domain_name
   certificate_arn = module.acm_wildcard_cert.acm_certificate_arn
+  route53_zone_id = aws_route53_zone.this.zone_id
 }

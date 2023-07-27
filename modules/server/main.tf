@@ -18,10 +18,6 @@ data "aws_subnets" "all" {
   }
 }
 
-data "aws_route53_zone" "this" {
-  name = local.domain_name
-}
-
 ################################################################################
 # ECS Resources
 ################################################################################
@@ -480,7 +476,7 @@ resource "aws_iam_role_policy_attachment" "s3_ecs_task_execution_policy_attachme
 }
 
 resource "aws_route53_record" "this" {
-  zone_id = data.aws_route53_zone.this.id
+  zone_id = var.route53_zone_id
   name    = "assets.${local.domain_name}"
   type    = "CNAME"
   ttl     = 300

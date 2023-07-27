@@ -87,3 +87,8 @@ variable "autoscaling_cpu_high_threshold" {
   type        = number
   default     = 80
 }
+
+variable "route53_zone_id" {
+  description = "The Route53 zone ID"
+  type        = string
+}

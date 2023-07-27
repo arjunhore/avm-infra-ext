@@ -10,10 +10,6 @@ locals {
   }
 }
 
-data "aws_route53_zone" "this" {
-  name = local.domain_name
-}
-
 ################################################################################
 # S3
 ################################################################################
@@ -133,7 +129,7 @@ module "cdn" {
 ################################################################################
 
 resource "aws_route53_record" "route53_wildcard_record" {
-  zone_id = data.aws_route53_zone.this.id
+  zone_id = var.route53_zone_id
   name    = local.domain_name
   type    = "A"
 

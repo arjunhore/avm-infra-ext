@@ -22,3 +22,8 @@ variable "certificate_arn" {
   description = "The domain certificate ARN"
   type        = string
 }
+
+variable "route53_zone_id" {
+  description = "The Route53 zone ID"
+  type        = string
+}
