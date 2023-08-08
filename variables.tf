@@ -46,6 +46,12 @@ variable "rds_port" {
   default     = 5432
 }
 
+variable "ec2_bastion_ami_id" {
+  type        = string
+  description = "Amazon Linux AMI ID for the Bastion instance"
+  default     = "ami-0a58b475e94715d02"
+}
+
 variable "workspace_iam_roles" {
   default = {
     mcro        = "arn:aws:iam::670255240370:role/AVMAdminRole"
