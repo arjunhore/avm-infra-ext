@@ -1,9 +1,10 @@
 locals {
-  environment      = var.environment
-  namespace        = var.namespace
-  server_namespace = "${var.namespace}-server"
-  domain_name      = var.domain_name
-  certificate_arn  = var.certificate_arn
+  environment         = var.environment
+  namespace           = "avm-${var.environment}"
+  workspace_namespace = "avm-${terraform.workspace}-${var.environment}"
+  server_namespace    = "${local.namespace}-server"
+  domain_name         = var.domain_name
+  certificate_arn     = var.certificate_arn
 
   tags = {
     Name        = local.server_namespace
@@ -235,15 +236,15 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
 ################################################################################
 
 resource "aws_s3_bucket" "aws_s3_bucket_envs" {
-  bucket = "${var.namespace}-envs"
+  bucket = "${local.workspace_namespace}-envs"
 }
 
 resource "aws_s3_bucket" "aws_s3_bucket_documents" {
-  bucket = "${var.namespace}-documents"
+  bucket = "${local.workspace_namespace}-documents"
 }
 
 resource "aws_s3_bucket" "aws_s3_bucket_assets" {
-  bucket = "${var.namespace}-assets"
+  bucket = "${local.workspace_namespace}-assets"
 }
 
 resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {
@@ -422,8 +423,8 @@ resource "aws_iam_policy" "aws_iam_policy_s3" {
             "s3:*"
           ],
           "Resource" : [
-            "arn:aws:s3:::${local.namespace}-*",
-            "arn:aws:s3:::${local.namespace}-*/*",
+            "arn:aws:s3:::${local.workspace_namespace}-*",
+            "arn:aws:s3:::${local.workspace_namespace}-*/*",
           ]
         },
       ]

@@ -7,11 +7,12 @@ provider "aws" {
 }
 
 locals {
-  region      = var.region
-  namespace   = "avm-${terraform.workspace}-${var.environment}"
-  environment = var.environment
-  domain_name = "${terraform.workspace}.${var.domain_name}"
-  account_id  = data.aws_caller_identity.current.account_id
+  region              = var.region
+  namespace           = "avm-${var.environment}"
+  workspace_namespace = "avm-${terraform.workspace}-${var.environment}"
+  environment         = var.environment
+  domain_name         = "${terraform.workspace}.${var.domain_name}"
+  account_id          = data.aws_caller_identity.current.account_id
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -170,7 +171,7 @@ module "security_group_alb" {
 module "cluster" {
   source = "terraform-aws-modules/rds-aurora/aws"
 
-  name              = "${local.namespace}-cluster"
+  name              = "${local.workspace_namespace}-cluster"
   engine            = "aurora-postgresql"
   engine_mode       = "provisioned"
   engine_version    = "15.3"
@@ -198,7 +199,7 @@ module "cluster" {
   instance_class = "db.serverless"
   instances      = {
     1 = {
-      identifier = "${local.namespace}-instance-1"
+      identifier = "${local.workspace_namespace}-instance-1"
     }
   }
 
@@ -406,7 +407,6 @@ module "server" {
 
   region                          = local.region
   environment                     = local.environment
-  namespace                       = local.namespace
   domain_name                     = local.domain_name
   certificate_arn                 = module.acm_wildcard_cert.acm_certificate_arn
   ecr_repository_image            = var.ecr_repository_image
@@ -428,7 +428,6 @@ module "web" {
 
   region          = local.region
   environment     = local.environment
-  namespace       = local.namespace
   domain_name     = local.domain_name
   certificate_arn = module.acm_wildcard_cert.acm_certificate_arn
   route53_zone_id = aws_route53_zone.this.zone_id

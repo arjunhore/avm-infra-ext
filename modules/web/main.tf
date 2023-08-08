@@ -1,8 +1,9 @@
 locals {
-  environment     = var.environment
-  namespace       = var.namespace
-  domain_name     = var.domain_name
-  certificate_arn = var.certificate_arn
+  environment         = var.environment
+  namespace           = "avm-${var.environment}"
+  workspace_namespace = "avm-${terraform.workspace}-${var.environment}"
+  domain_name         = var.domain_name
+  certificate_arn     = var.certificate_arn
 
   tags = {
     Name        = local.namespace
@@ -15,7 +16,7 @@ locals {
 ################################################################################
 
 resource "aws_s3_bucket" "aws_s3_bucket_web" {
-  bucket = "${var.namespace}-web"
+  bucket = "${local.workspace_namespace}-web"
 }
 
 resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {

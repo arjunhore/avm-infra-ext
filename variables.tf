@@ -54,8 +54,9 @@ variable "ec2_bastion_ami_id" {
 
 variable "workspace_iam_roles" {
   default = {
-    mcro        = "arn:aws:iam::670255240370:role/AVMAdminRole"
-    renaissance = "arn:aws:iam::624134621134:role/AVMAdminRole"
-    demo        = "arn:aws:iam::725002219993:role/AVMAdminRole"
+    mcro                 = "arn:aws:iam::670255240370:role/AVMAdminRole"
+    renaissance          = "arn:aws:iam::624134621134:role/AVMAdminRole"
+    addvaluemachine-demo = "arn:aws:iam::725002219993:role/AVMAdminRole"
+    addvaluemachine      = "arn:aws:iam::902610975495:role/AVMAdminRole"
   }
 }
