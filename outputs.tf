@@ -22,3 +22,8 @@ output "rds_master_password" {
   description = "The database master password"
   value       = nonsensitive(module.cluster.cluster_master_password)
 }
+
+output "bastion_ip" {
+  description = "The public IP address of the bastion host"
+  value       = module.bastion.public_ip
+}
