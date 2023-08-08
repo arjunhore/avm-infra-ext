@@ -187,9 +187,11 @@ module "cluster" {
   db_subnet_group_name   = module.vpc.database_subnet_group_name
   create_security_group  = false
 
-  apply_immediately   = true
-  skip_final_snapshot = true
-  monitoring_interval = 60
+  apply_immediately            = true
+  skip_final_snapshot          = true
+  performance_insights_enabled = true
+  deletion_protection          = true
+  monitoring_interval          = 60
 
   serverlessv2_scaling_configuration = {
     min_capacity = 1
@@ -268,9 +270,6 @@ module "security_group_bastion" {
   description     = "Allow SSH inbound traffic for Bastion instance"
   vpc_id          = module.vpc.vpc_id
   use_name_prefix = false
-
-  ingress_cidr_blocks = ["0.0.0.0/0"]
-  ingress_rules       = ["ssh-tcp"]
 
   egress_cidr_blocks = ["0.0.0.0/0"]
   egress_rules       = ["http-80-tcp", "https-443-tcp", "postgresql-tcp"]

@@ -271,8 +271,25 @@ resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {
   )
 }
 
-resource "aws_s3_bucket_cors_configuration" "aws_s3_bucket_docs_cors" {
+resource "aws_s3_bucket_cors_configuration" "aws_s3_bucket_assets_cors" {
   bucket = aws_s3_bucket.aws_s3_bucket_assets.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]
+    allowed_origins = ["*"]
+    expose_headers  = []
+    max_age_seconds = 3000
+  }
+
+  cors_rule {
+    allowed_methods = ["GET"]
+    allowed_origins = ["*"]
+  }
+}
+
+resource "aws_s3_bucket_cors_configuration" "aws_s3_bucket_documents_cors" {
+  bucket = aws_s3_bucket.aws_s3_bucket_documents.id
 
   cors_rule {
     allowed_headers = ["*"]
