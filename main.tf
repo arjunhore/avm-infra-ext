@@ -51,8 +51,9 @@ module "vpc" {
   create_flow_log_cloudwatch_log_group = true
   create_flow_log_cloudwatch_iam_role  = true
 
-  flow_log_max_aggregation_interval         = 60
-  flow_log_cloudwatch_log_group_name_prefix = "/aws/${local.namespace}/"
+  flow_log_max_aggregation_interval               = 60
+  flow_log_cloudwatch_log_group_name_prefix       = "/aws/${local.namespace}/"
+  flow_log_cloudwatch_log_group_retention_in_days = 365
 
   tags = local.tags
 }
@@ -66,6 +67,9 @@ module "ecs" {
   version = "~> 5.2"
 
   cluster_name = "${local.namespace}-cluster"
+
+  create_cloudwatch_log_group            = true
+  cloudwatch_log_group_retention_in_days = 365
 
   # capacity provider
   fargate_capacity_providers = {

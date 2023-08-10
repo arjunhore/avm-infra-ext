@@ -247,6 +247,10 @@ resource "aws_s3_bucket" "aws_s3_bucket_assets" {
   bucket = "${local.workspace_namespace}-assets"
 }
 
+resource "aws_s3_bucket" "aws_s3_bucket_logs" {
+  bucket = "${local.workspace_namespace}-bucket-access-logs"
+}
+
 resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {
   bucket = aws_s3_bucket.aws_s3_bucket_assets.id
   policy = jsonencode(
@@ -303,6 +307,27 @@ resource "aws_s3_bucket_cors_configuration" "aws_s3_bucket_documents_cors" {
     allowed_methods = ["GET"]
     allowed_origins = ["*"]
   }
+}
+
+resource "aws_s3_bucket_logging" "aws_s3_bucket_logging_envs" {
+  bucket = aws_s3_bucket.aws_s3_bucket_envs.id
+
+  target_bucket = aws_s3_bucket.aws_s3_bucket_logs.id
+  target_prefix = aws_s3_bucket.aws_s3_bucket_envs.bucket
+}
+
+resource "aws_s3_bucket_logging" "aws_s3_bucket_logging_documents" {
+  bucket = aws_s3_bucket.aws_s3_bucket_documents.id
+
+  target_bucket = aws_s3_bucket.aws_s3_bucket_logs.id
+  target_prefix = aws_s3_bucket.aws_s3_bucket_documents.bucket
+}
+
+resource "aws_s3_bucket_logging" "aws_s3_bucket_logging_assets" {
+  bucket = aws_s3_bucket.aws_s3_bucket_assets.id
+
+  target_bucket = aws_s3_bucket.aws_s3_bucket_logs.id
+  target_prefix = aws_s3_bucket.aws_s3_bucket_assets.bucket
 }
 
 ################################################################################
@@ -363,7 +388,7 @@ resource "aws_secretsmanager_secret" "this" {
 
 resource "aws_cloudwatch_log_group" "this" {
   name              = local.server_namespace
-  retention_in_days = 90
+  retention_in_days = 365
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
