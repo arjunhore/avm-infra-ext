@@ -64,6 +64,12 @@ variable "rds_disk_queue_depth_threshold" {
   default     = 64
 }
 
+variable "notifications_email" {
+  description = "The email address for notifications"
+  type        = string
+  default     = "support@ddvaluemachine.com"
+}
+
 variable "workspace_iam_roles" {
   default = {
     mcro                 = "arn:aws:iam::670255240370:role/AVMAdminRole"

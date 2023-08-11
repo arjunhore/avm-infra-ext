@@ -367,6 +367,12 @@ resource "aws_sns_topic" "sns_topic_alerts" {
   name = "${local.namespace}-alerts"
 }
 
+resource "aws_sns_topic_subscription" "sns_topic_subscription_notifications" {
+  topic_arn = aws_sns_topic.sns_topic_alerts.arn
+  protocol  = "email"
+  endpoint  = var.notifications_email
+}
+
 resource "random_password" "password" {
   count   = var.rds_master_password != "" ? 0 : 1
   length  = 20
