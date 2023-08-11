@@ -46,6 +46,24 @@ variable "rds_port" {
   default     = 5432
 }
 
+variable "rds_cpu_usage_threshold" {
+  description = "The maximum percentage of CPU utilization."
+  type        = number
+  default     = 80
+}
+
+variable "rds_freeable_memory_threshold" {
+  description = "The minimum amount of available random access memory in Byte."
+  type        = number
+  default     = 64000000 # 64 Megabyte in Byte
+}
+
+variable "rds_disk_queue_depth_threshold" {
+  description = "The maximum number of outstanding IOs (read/write requests) waiting to access the disk."
+  type        = number
+  default     = 64
+}
+
 variable "workspace_iam_roles" {
   default = {
     mcro                 = "arn:aws:iam::670255240370:role/AVMAdminRole"
