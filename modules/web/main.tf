@@ -74,6 +74,7 @@ module "cdn" {
   is_ipv6_enabled     = true
   price_class         = "PriceClass_All"
   default_root_object = "index.html"
+  web_acl_id          = var.web_acl_arn
 
   create_origin_access_control = true
   origin_access_control        = {

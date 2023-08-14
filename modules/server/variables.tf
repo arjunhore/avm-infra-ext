@@ -87,3 +87,8 @@ variable "route53_zone_id" {
   description = "The Route53 zone ID"
   type        = string
 }
+
+variable "web_acl_arn" {
+  description = "If using WAFv2, provide the ARN of the web ACL."
+  type        = string
+}

@@ -412,6 +412,89 @@ resource "aws_route53_record" "route53_wildcard_record" {
   }
 }
 
+resource "aws_wafv2_web_acl" "web_acl" {
+  name  = "${local.namespace}-cloudfront-waf"
+  scope = "CLOUDFRONT"
+
+  default_action {
+    block {}
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesAmazonIpReputationList"
+    priority = 0
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAmazonIpReputationList"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesAmazonIpReputationList"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesCommonRuleSet"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesCommonRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesKnownBadInputsRuleSet"
+    priority = 2
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesKnownBadInputsRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "ExternalACL"
+    sampled_requests_enabled   = true
+  }
+
+  tags = local.tags
+}
+
 ################################################################################
 # Server Module
 ################################################################################
@@ -431,6 +514,7 @@ module "server" {
   rds_security_group_id           = module.security_group_rds.security_group_id
   rds_port                        = var.rds_port
   route53_zone_id                 = aws_route53_zone.this.zone_id
+  web_acl_arn                     = aws_wafv2_web_acl.web_acl.arn
 }
 
 ################################################################################
@@ -445,6 +529,7 @@ module "web" {
   domain_name     = local.domain_name
   certificate_arn = module.acm_wildcard_cert.acm_certificate_arn
   route53_zone_id = aws_route53_zone.this.zone_id
+  web_acl_arn     = aws_wafv2_web_acl.web_acl.arn
 }
 
 ################################################################################
