@@ -17,6 +17,8 @@ locals {
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 
+  vanta_enabled = terraform.workspace == "mcro" ? 1 : 0
+
   tags = {
     Name        = local.namespace
     Environment = var.environment
@@ -297,65 +299,6 @@ resource "aws_cloudwatch_metric_alarm" "rds_cloudwatch_alarm_disk_queue_depth_hi
 }
 
 ################################################################################
-# Vanta Module
-################################################################################
-
-resource "aws_iam_policy" "VantaAdditionalPermissions" {
-  name        = "VantaAdditionalPermissions"
-  description = "Custom Vanta Policy"
-  policy      = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Deny",
-        "Action" : [
-          "datapipeline:EvaluateExpression",
-          "datapipeline:QueryObjects",
-          "rds:DownloadDBLogFilePortion"
-        ],
-        "Resource" : "*"
-      }
-    ]
-  })
-}
-
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-    principals {
-      identifiers = ["956993596390"]
-      type        = "AWS"
-    }
-    condition {
-      test     = "StringEquals"
-      values   = ["0082C0B99FDD59F"]
-      variable = "sts:ExternalId"
-    }
-  }
-}
-
-resource "aws_iam_role" "vanta-auditor" {
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-  name               = "vanta-auditor"
-}
-
-resource "aws_iam_role_policy_attachment" "VantaSecurityAudit" {
-  role       = aws_iam_role.vanta-auditor.name
-  policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
-}
-
-resource "aws_iam_role_policy_attachment" "VantaAdditionalPermissions" {
-  role       = aws_iam_role.vanta-auditor.name
-  policy_arn = aws_iam_policy.VantaAdditionalPermissions.arn
-}
-
-output "vanta-auditor-arn" {
-  description = "The arn from the Terraform created role that you need to input into the Vanta UI at the end of the AWS connection steps."
-  value       = aws_iam_role.vanta-auditor.arn
-}
-
-################################################################################
 # Supporting Resources
 ################################################################################
 
@@ -542,4 +485,16 @@ module "bastion" {
   region      = local.region
   environment = local.environment
   vpc_id      = module.vpc.vpc_id
+}
+
+################################################################################
+# Vanta Module
+################################################################################
+
+module "vanta" {
+  source = "./modules/vanta"
+
+  count       = local.vanta_enabled
+  region      = local.region
+  environment = local.environment
 }
