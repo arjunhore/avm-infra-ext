@@ -360,7 +360,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
   scope = "CLOUDFRONT"
 
   default_action {
-    block {}
+    allow {}
   }
 
   rule {
@@ -431,7 +431,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
 
   visibility_config {
     cloudwatch_metrics_enabled = true
-    metric_name                = "ExternalACL"
+    metric_name                = "${local.namespace}-cloudfront-waf"
     sampled_requests_enabled   = true
   }
 
