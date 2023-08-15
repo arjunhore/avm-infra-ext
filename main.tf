@@ -123,7 +123,7 @@ module "alb" {
     {
       port            = 443
       protocol        = "HTTPS"
-      certificate_arn = module.acm_wildcard_cert.acm_certificate_arn
+      certificate_arn = module.acm_certificate.acm_certificate_arn
       action_type     = "fixed-response"
       fixed_response  = {
         content_type = "text/plain"
@@ -451,15 +451,16 @@ resource "aws_sns_topic_subscription" "sns_topic_subscription_notifications" {
   endpoint  = var.notifications_email
 }
 
-module "acm_wildcard_cert" {
+module "acm_certificate" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.3.2"
 
-  domain_name = "*.${local.domain_name}"
+  domain_name = local.domain_name
   zone_id     = aws_route53_zone.this.zone_id
 
   subject_alternative_names = [
-    local.domain_name,
+    "api.${local.domain_name}",
+    "assets.${local.domain_name}",
   ]
 
   tags = local.tags
@@ -474,7 +475,7 @@ resource "aws_route53_zone" "this" {
 
 resource "aws_route53_record" "route53_wildcard_record" {
   zone_id = aws_route53_zone.this.zone_id
-  name    = "*.${local.domain_name}"
+  name    = "api.${local.domain_name}"
   type    = "A"
 
   alias {
@@ -660,7 +661,7 @@ module "server" {
   region                          = local.region
   environment                     = local.environment
   domain_name                     = local.domain_name
-  certificate_arn                 = module.acm_wildcard_cert.acm_certificate_arn
+  certificate_arn                 = module.acm_certificate.acm_certificate_arn
   ecr_repository_image            = var.ecr_repository_image
   vpc_id                          = module.vpc.vpc_id
   ecs_cluster_id                  = module.ecs.cluster_id
@@ -680,7 +681,7 @@ module "web" {
   region          = local.region
   environment     = local.environment
   domain_name     = local.domain_name
-  certificate_arn = module.acm_wildcard_cert.acm_certificate_arn
+  certificate_arn = module.acm_certificate.acm_certificate_arn
   route53_zone_id = aws_route53_zone.this.zone_id
   web_acl_arn     = aws_wafv2_web_acl.web_acl_cloudfront.arn
 }
