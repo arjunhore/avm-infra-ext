@@ -22,6 +22,12 @@ variable "ecr_repository_image" {
   default     = "309847704252.dkr.ecr.us-east-1.amazonaws.com/dev-avm-server:1.0.0"
 }
 
+variable "notifications_email" {
+  description = "The email address for notifications"
+  type        = string
+  default     = "support@ddvaluemachine.com"
+}
+
 variable "rds_master_username" {
   type        = string
   description = "The master username for the RDS instance"
@@ -44,6 +50,12 @@ variable "rds_port" {
   type        = number
   description = "The RDS instance port"
   default     = 5432
+}
+
+variable "statistic_period" {
+  description = "The number of seconds that make each statistic period."
+  type        = number
+  default     = 60
 }
 
 variable "rds_cpu_usage_threshold" {
@@ -70,10 +82,22 @@ variable "rds_disk_queue_depth_threshold" {
   default     = 64
 }
 
-variable "notifications_email" {
-  description = "The email address for notifications"
-  type        = string
-  default     = "support@ddvaluemachine.com"
+variable "alb_unhealthy_hosts_threshold" {
+  description = "The number of unhealthy hosts."
+  type        = number
+  default     = 0
+}
+
+variable "alb_response_time_threshold" {
+  description = "The average number of milliseconds that requests should complete within."
+  type        = number
+  default     = 1000
+}
+
+variable "alb_5xx_response_threshold" {
+  description = "The number of 5xx responses."
+  type        = number
+  default     = 0
 }
 
 variable "workspace_iam_roles" {

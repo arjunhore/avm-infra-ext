@@ -168,6 +168,69 @@ module "security_group_alb" {
   tags = local.tags
 }
 
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_alb_unhealthy_hosts" {
+  alarm_name          = "${local.namespace}-alb-unhealthy-hosts"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "UnHealthyHostCount"
+  namespace           = "AWS/ApplicationELB"
+  period              = var.statistic_period
+  statistic           = "Minimum"
+  threshold           = var.alb_unhealthy_hosts_threshold
+  alarm_description   = "Unhealthy host count too high"
+
+  alarm_actions = aws_sns_topic.sns_topic_alerts.*.arn
+  ok_actions    = aws_sns_topic.sns_topic_alerts.*.arn
+
+  dimensions = {
+    LoadBalancer = module.alb.lb_id
+  }
+
+  tags = local.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_alb_response_time" {
+  alarm_name          = "${local.namespace}-alb-response-time"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "TargetResponseTime"
+  namespace           = "AWS/ApplicationELB"
+  period              = var.statistic_period
+  statistic           = "Average"
+  threshold           = var.alb_response_time_threshold
+  alarm_description   = "Average API response time is too high"
+
+  alarm_actions = aws_sns_topic.sns_topic_alerts.*.arn
+  ok_actions    = aws_sns_topic.sns_topic_alerts.*.arn
+
+  dimensions = {
+    LoadBalancer = module.alb.lb_id
+  }
+
+  tags = local.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_alb_target_5xx_count" {
+  alarm_name          = "${local.namespace}-alb-5xx-count"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "HTTPCode_ELB_5XX_Count"
+  namespace           = "AWS/ApplicationELB"
+  period              = var.statistic_period
+  statistic           = "Sum"
+  threshold           = var.alb_5xx_response_threshold
+  alarm_description   = "Average API 5XX load balancer error code count is too high"
+
+  alarm_actions = aws_sns_topic.sns_topic_alerts.*.arn
+  ok_actions    = aws_sns_topic.sns_topic_alerts.*.arn
+
+  dimensions = {
+    LoadBalancer = module.alb.lb_id
+  }
+
+  tags = local.tags
+}
+
 ################################################################################
 # RDS Module
 ################################################################################
@@ -235,13 +298,13 @@ module "security_group_rds" {
   tags = local.tags
 }
 
-resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_cpu_usage_high" {
-  alarm_name          = "${module.cluster.cluster_database_name}-rds-cpu-usage-high"
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_cpu_usage" {
+  alarm_name          = "${local.namespace}-rds-cpu-usage"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "CPUUtilization"
   namespace           = "AWS/RDS"
-  period              = 60
+  period              = var.statistic_period
   statistic           = "Average"
   threshold           = var.rds_cpu_usage_threshold
   alarm_description   = "Average database CPU utilization too high"
@@ -256,13 +319,13 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_cpu_usage_high" {
   tags = local.tags
 }
 
-resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_local_storage_low" {
-  alarm_name          = "${module.cluster.cluster_database_name}-rds-local-storage-low"
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_local_storage" {
+  alarm_name          = "${local.namespace}-rds-local-storage"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
   metric_name         = "FreeLocalStorage"
   namespace           = "AWS/RDS"
-  period              = 60
+  period              = var.statistic_period
   statistic           = "Average"
   threshold           = var.rds_local_storage_threshold
   alarm_description   = "Average database local storage too low"
@@ -277,13 +340,13 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_local_storage_low" 
   tags = local.tags
 }
 
-resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_freeable_memory_low" {
-  alarm_name          = "${module.cluster.cluster_database_name}-rds-freeable-memory-low"
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_freeable_memory" {
+  alarm_name          = "${local.namespace}-rds-freeable-memory"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
   metric_name         = "FreeableMemory"
   namespace           = "AWS/RDS"
-  period              = 60
+  period              = var.statistic_period
   statistic           = "Average"
   threshold           = var.rds_freeable_memory_threshold
   alarm_description   = "Average database random access memory too low"
@@ -299,12 +362,12 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_freeable_memory_low
 }
 
 resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_disk_queue_depth_high" {
-  alarm_name          = "${module.cluster.cluster_database_name}-rds-disk-queue-depth-high"
+  alarm_name          = "${local.namespace}-rds-disk-queue-depth-high"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
   metric_name         = "DiskQueueDepth"
   namespace           = "AWS/RDS"
-  period              = 60
+  period              = var.statistic_period
   statistic           = "Average"
   threshold           = var.rds_freeable_memory_threshold
   alarm_description   = "Average database disk queue depth too high"
