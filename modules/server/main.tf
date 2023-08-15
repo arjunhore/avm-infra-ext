@@ -128,13 +128,6 @@ resource "aws_security_group" "ecs_service_security_group" {
     security_groups = [var.load_balancer_security_group_id]
   }
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = var.rds_port
-    to_port         = var.rds_port
-    security_groups = [var.rds_security_group_id]
-  }
-
   egress {
     from_port   = 0
     to_port     = 0

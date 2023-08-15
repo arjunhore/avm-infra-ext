@@ -152,6 +152,11 @@ resource "aws_alb_listener_rule" "this" {
   }
 }
 
+resource "aws_wafv2_web_acl_association" "this" {
+  resource_arn = module.alb.lb_arn
+  web_acl_arn  = aws_wafv2_web_acl.web_acl_alb.arn
+}
+
 module "security_group_alb" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.1"
@@ -244,10 +249,11 @@ module "cluster" {
   engine_version    = "15.3"
   storage_encrypted = true
 
-  port            = var.rds_port
-  database_name   = var.rds_database_name
-  master_username = var.rds_master_username
-  master_password = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
+  port                        = var.rds_port
+  database_name               = var.rds_database_name
+  master_username             = var.rds_master_username
+  master_password             = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
+  manage_master_user_password = false
 
   vpc_id                 = module.vpc.vpc_id
   vpc_security_group_ids = [module.security_group_rds.security_group_id]
@@ -383,8 +389,12 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_disk_queue_depth_hi
 }
 
 ################################################################################
-# GuardDuty Module
+# Security Module
 ################################################################################
+
+resource "aws_securityhub_account" "securityhub_account" {
+  enable_default_standards = true
+}
 
 resource "aws_guardduty_detector" "guardduty_detector" {
   enable = true
@@ -474,9 +484,92 @@ resource "aws_route53_record" "route53_wildcard_record" {
   }
 }
 
-resource "aws_wafv2_web_acl" "web_acl" {
+resource "aws_wafv2_web_acl" "web_acl_cloudfront" {
   name  = "${local.namespace}-cloudfront-waf"
   scope = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesAmazonIpReputationList"
+    priority = 0
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAmazonIpReputationList"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesAmazonIpReputationList"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesCommonRuleSet"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesCommonRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWS-AWSManagedRulesKnownBadInputsRuleSet"
+    priority = 2
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWS-AWSManagedRulesKnownBadInputsRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${local.namespace}-cloudfront-waf"
+    sampled_requests_enabled   = true
+  }
+
+  tags = local.tags
+}
+
+resource "aws_wafv2_web_acl" "web_acl_alb" {
+  name  = "${local.namespace}-alb-waf"
+  scope = "REGIONAL"
 
   default_action {
     allow {}
@@ -573,10 +666,8 @@ module "server" {
   ecs_cluster_id                  = module.ecs.cluster_id
   ecs_cluster_name                = module.ecs.cluster_name
   load_balancer_security_group_id = module.security_group_alb.security_group_id
-  rds_security_group_id           = module.security_group_rds.security_group_id
-  rds_port                        = var.rds_port
   route53_zone_id                 = aws_route53_zone.this.zone_id
-  web_acl_arn                     = aws_wafv2_web_acl.web_acl.arn
+  web_acl_arn                     = aws_wafv2_web_acl.web_acl_cloudfront.arn
 }
 
 ################################################################################
@@ -591,7 +682,7 @@ module "web" {
   domain_name     = local.domain_name
   certificate_arn = module.acm_wildcard_cert.acm_certificate_arn
   route53_zone_id = aws_route53_zone.this.zone_id
-  web_acl_arn     = aws_wafv2_web_acl.web_acl.arn
+  web_acl_arn     = aws_wafv2_web_acl.web_acl_cloudfront.arn
 }
 
 ################################################################################
