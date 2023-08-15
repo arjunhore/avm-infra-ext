@@ -19,7 +19,7 @@ variable "domain_name" {
 variable "ecr_repository_image" {
   description = "The ECR repository URI for the server image"
   type        = string
-  default     = "309847704252.dkr.ecr.us-east-1.amazonaws.com/dev-avm-server:1.0.0"
+  default     = "309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-server:1.0.0"
 }
 
 variable "notifications_email" {
