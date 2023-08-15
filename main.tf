@@ -299,11 +299,52 @@ resource "aws_cloudwatch_metric_alarm" "rds_cloudwatch_alarm_disk_queue_depth_hi
 }
 
 ################################################################################
-# Supporting Resources
+# GuardDuty Module
 ################################################################################
 
 resource "aws_guardduty_detector" "guardduty_detector" {
   enable = true
+}
+
+resource "aws_cloudwatch_event_rule" "cloudwatch_event_rule_guardduty" {
+  name          = "${local.namespace}-guardduty-finding-events"
+  description   = "AWS GuardDuty event findings"
+  event_pattern = jsonencode(
+    {
+      "detail-type" : [
+        "GuardDuty Finding"
+      ],
+      "source" : [
+        "aws.guardduty"
+      ]
+    })
+}
+
+resource "aws_cloudwatch_event_target" "cloudwatch_event_target_alerts" {
+  rule      = aws_cloudwatch_event_rule.cloudwatch_event_rule_guardduty.name
+  target_id = "${local.namespace}-send-to-sns-alerts"
+  arn       = aws_sns_topic.sns_topic_alerts.arn
+
+  input_transformer {
+    input_paths = {
+      title       = "$.detail.title"
+      description = "$.detail.description"
+      eventTime   = "$.detail.service.eventFirstSeen"
+      region      = "$.detail.region"
+    }
+
+    input_template = "\"GuardDuty finding in <region> first seen at <eventTime>: <title> <description>\""
+  }
+}
+
+################################################################################
+# Supporting Resources
+################################################################################
+
+resource "random_password" "password" {
+  count   = var.rds_master_password != "" ? 0 : 1
+  length  = 20
+  special = false
 }
 
 resource "aws_sns_topic" "sns_topic_alerts" {
@@ -314,12 +355,6 @@ resource "aws_sns_topic_subscription" "sns_topic_subscription_notifications" {
   topic_arn = aws_sns_topic.sns_topic_alerts.arn
   protocol  = "email"
   endpoint  = var.notifications_email
-}
-
-resource "random_password" "password" {
-  count   = var.rds_master_password != "" ? 0 : 1
-  length  = 20
-  special = false
 }
 
 module "acm_wildcard_cert" {
