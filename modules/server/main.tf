@@ -193,8 +193,8 @@ resource "aws_appautoscaling_policy" "autoscaling_down_policy" {
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
-  alarm_name          = "${local.server_namespace}-cpu-usage-high-${var.autoscaling_cpu_high_threshold}"
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage_high" {
+  alarm_name          = "${local.server_namespace}-cpu-usage-high"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "CPUUtilization"
@@ -203,17 +203,18 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
   statistic           = "Average"
   threshold           = var.autoscaling_cpu_high_threshold
 
+  alarm_actions = [aws_appautoscaling_policy.autoscaling_up_policy.arn]
+
   dimensions = {
     ClusterName = var.ecs_cluster_id
     ServiceName = aws_ecs_service.this.name
   }
-  alarm_actions = [aws_appautoscaling_policy.autoscaling_up_policy.arn]
 
   tags = local.tags
 }
 
-resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
-  alarm_name          = "${local.server_namespace}-cpu-usage-low-${var.autoscaling_cpu_low_threshold}"
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage_low" {
+  alarm_name          = "${local.server_namespace}-cpu-usage-low"
   comparison_operator = "LessThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "CPUUtilization"
@@ -222,11 +223,12 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
   statistic           = "Average"
   threshold           = var.autoscaling_cpu_low_threshold
 
+  alarm_actions = [aws_appautoscaling_policy.autoscaling_down_policy.arn]
+
   dimensions = {
     ClusterName = var.ecs_cluster_id
     ServiceName = aws_ecs_service.this.name
   }
-  alarm_actions = [aws_appautoscaling_policy.autoscaling_down_policy.arn]
 
   tags = local.tags
 }

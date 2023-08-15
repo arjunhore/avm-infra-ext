@@ -13,8 +13,19 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "sns_topic_alerts_arn" {
+  description = "The SNS topic ARN to send alerts to"
+  type        = string
+}
+
 variable "ec2_bastion_ami_id" {
   type        = string
   description = "Amazon Linux AMI ID for the Bastion instance"
   default     = "ami-0a58b475e94715d02"
+}
+
+variable "ec2_cpu_usage_threshold" {
+  description = "The maximum percentage of CPU utilization."
+  type        = number
+  default     = 90
 }

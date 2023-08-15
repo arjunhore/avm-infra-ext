@@ -601,9 +601,10 @@ module "web" {
 module "bastion" {
   source = "./modules/bastion"
 
-  region      = local.region
-  environment = local.environment
-  vpc_id      = module.vpc.vpc_id
+  region               = local.region
+  environment          = local.environment
+  vpc_id               = module.vpc.vpc_id
+  sns_topic_alerts_arn = aws_sns_topic.sns_topic_alerts.arn
 }
 
 ################################################################################

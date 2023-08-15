@@ -86,3 +86,23 @@ module ec2_connect_role {
 
   tags = local.tags
 }
+
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage" {
+  alarm_name          = "${local.namespace}-bastion-cpu-usage"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 60
+  statistic           = "Average"
+  threshold           = var.ec2_cpu_usage_threshold
+
+  alarm_actions = [var.sns_topic_alerts_arn]
+  ok_actions    = [var.sns_topic_alerts_arn]
+
+  dimensions = {
+    InstanceId = module.bastion.id
+  }
+
+  tags = local.tags
+}
