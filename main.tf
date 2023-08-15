@@ -235,64 +235,85 @@ module "security_group_rds" {
   tags = local.tags
 }
 
-resource "aws_cloudwatch_metric_alarm" "rds_cloudwatch_alarm_cpu_usage_high" {
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_cpu_usage_high" {
   alarm_name          = "${module.cluster.cluster_database_name}-rds-cpu-usage-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "CPUUtilization"
   namespace           = "AWS/RDS"
-  period              = 300
+  period              = 60
   statistic           = "Average"
   threshold           = var.rds_cpu_usage_threshold
-  alarm_description   = "Average database CPU utilization over last 5 minutes too high"
+  alarm_description   = "Average database CPU utilization too high"
 
   alarm_actions = aws_sns_topic.sns_topic_alerts.*.arn
   ok_actions    = aws_sns_topic.sns_topic_alerts.*.arn
 
   dimensions = {
-    DBInstanceIdentifier = module.cluster.cluster_database_name
+    DBClusterIdentifier = module.cluster.cluster_id
   }
 
   tags = local.tags
 }
 
-resource "aws_cloudwatch_metric_alarm" "rds_cloudwatch_alarm_memory_usage_high" {
-  alarm_name          = "${module.cluster.cluster_database_name}-rds-memory-usage-high"
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_local_storage_low" {
+  alarm_name          = "${module.cluster.cluster_database_name}-rds-local-storage-low"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "FreeLocalStorage"
+  namespace           = "AWS/RDS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = var.rds_local_storage_threshold
+  alarm_description   = "Average database local storage too low"
+
+  alarm_actions = aws_sns_topic.sns_topic_alerts.*.arn
+  ok_actions    = aws_sns_topic.sns_topic_alerts.*.arn
+
+  dimensions = {
+    DBClusterIdentifier = module.cluster.cluster_id
+  }
+
+  tags = local.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_freeable_memory_low" {
+  alarm_name          = "${module.cluster.cluster_database_name}-rds-freeable-memory-low"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
   metric_name         = "FreeableMemory"
   namespace           = "AWS/RDS"
-  period              = 300
+  period              = 60
   statistic           = "Average"
   threshold           = var.rds_freeable_memory_threshold
-  alarm_description   = "Average database freeable memory over last 5 minutes too low, performance may suffer"
+  alarm_description   = "Average database random access memory too low"
 
   alarm_actions = aws_sns_topic.sns_topic_alerts.*.arn
   ok_actions    = aws_sns_topic.sns_topic_alerts.*.arn
 
   dimensions = {
-    DBInstanceIdentifier = module.cluster.cluster_database_name
+    DBClusterIdentifier = module.cluster.cluster_id
   }
 
   tags = local.tags
 }
 
-resource "aws_cloudwatch_metric_alarm" "rds_cloudwatch_alarm_disk_queue_depth_high" {
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_disk_queue_depth_high" {
   alarm_name          = "${module.cluster.cluster_database_name}-rds-disk-queue-depth-high"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
   metric_name         = "DiskQueueDepth"
   namespace           = "AWS/RDS"
-  period              = 300
+  period              = 60
   statistic           = "Average"
-  threshold           = var.rds_disk_queue_depth_threshold
-  alarm_description   = "Average database disk queue depth over last 5 minutes too high, performance may suffer"
+  threshold           = var.rds_freeable_memory_threshold
+  alarm_description   = "Average database disk queue depth too high"
 
   alarm_actions = aws_sns_topic.sns_topic_alerts.*.arn
   ok_actions    = aws_sns_topic.sns_topic_alerts.*.arn
 
   dimensions = {
-    DBInstanceIdentifier = module.cluster.cluster_database_name
+    DBClusterIdentifier = module.cluster.cluster_id
   }
 
   tags = local.tags

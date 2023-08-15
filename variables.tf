@@ -52,14 +52,20 @@ variable "rds_cpu_usage_threshold" {
   default     = 80
 }
 
-variable "rds_freeable_memory_threshold" {
-  description = "The minimum amount of available random access memory in Byte."
+variable "rds_local_storage_threshold" {
+  description = "The amount of local storage available."
   type        = number
-  default     = 64000000 # 64 Megabyte in Byte
+  default     = 1024 * 1000 * 1000 # 1 GB
+}
+
+variable "rds_freeable_memory_threshold" {
+  description = "The amount of available random access memory."
+  type        = number
+  default     = 256 * 1000 * 1000 # 256 MB
 }
 
 variable "rds_disk_queue_depth_threshold" {
-  description = "The maximum number of outstanding IOs (read/write requests) waiting to access the disk."
+  description = "The number of outstanding read/write requests waiting to access the disk."
   type        = number
   default     = 64
 }
