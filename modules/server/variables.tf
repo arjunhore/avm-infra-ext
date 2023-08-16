@@ -23,11 +23,6 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "ecs_cluster_id" {
-  description = "The ECS cluster ID"
-  type        = string
-}
-
 variable "ecs_cluster_name" {
   description = "The ECS cluster name"
   type        = string
@@ -41,6 +36,7 @@ variable "load_balancer_security_group_id" {
 variable "ecr_repository_image" {
   description = "The ECR repository image URI"
   type        = string
+  default     = "309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-server:1.0.0"
 }
 
 variable "docker_container_port" {
@@ -81,4 +77,14 @@ variable "route53_zone_id" {
 variable "web_acl_arn" {
   description = "If using WAFv2, provide the ARN of the web ACL."
   type        = string
+}
+
+variable "rds_cluster_identifier" {
+  description = "The RDS cluster ID"
+  type        = string
+}
+
+variable "rds_master_password" {
+  type        = string
+  description = "The master password for the RDS instance"
 }

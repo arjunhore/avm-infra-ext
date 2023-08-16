@@ -11,7 +11,7 @@ locals {
   namespace           = "avm-${var.environment}"
   workspace_namespace = "avm-${terraform.workspace}-${var.environment}"
   environment         = var.environment
-  domain_name         = "${terraform.workspace}.${var.domain_name}"
+  domain_name         = "${terraform.workspace}.${var.root_domain_name}"
   account_id          = data.aws_caller_identity.current.account_id
 
   vpc_cidr = "10.0.0.0/16"
@@ -278,7 +278,7 @@ module "cluster" {
     }
   }
 
-  tags = local.tags
+  tags = merge(tomap({ VantaContainsUserData = "true" }), local.tags)
 }
 
 module "security_group_rds" {
@@ -661,14 +661,14 @@ module "server" {
   region                          = local.region
   environment                     = local.environment
   domain_name                     = local.domain_name
-  certificate_arn                 = module.acm_certificate.acm_certificate_arn
-  ecr_repository_image            = var.ecr_repository_image
   vpc_id                          = module.vpc.vpc_id
-  ecs_cluster_id                  = module.ecs.cluster_id
-  ecs_cluster_name                = module.ecs.cluster_name
+  certificate_arn                 = module.acm_certificate.acm_certificate_arn
   load_balancer_security_group_id = module.security_group_alb.security_group_id
   route53_zone_id                 = aws_route53_zone.this.zone_id
   web_acl_arn                     = aws_wafv2_web_acl.web_acl_cloudfront.arn
+  ecs_cluster_name                = module.ecs.cluster_name
+  rds_cluster_identifier          = module.cluster.cluster_id
+  rds_master_password             = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
 }
 
 ################################################################################

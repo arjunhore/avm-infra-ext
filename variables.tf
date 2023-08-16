@@ -10,16 +10,10 @@ variable "environment" {
   default     = "prod"
 }
 
-variable "domain_name" {
+variable "root_domain_name" {
   description = "The root domain name"
   type        = string
   default     = "avm.technology"
-}
-
-variable "ecr_repository_image" {
-  description = "The ECR repository URI for the server image"
-  type        = string
-  default     = "309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-server:1.0.0"
 }
 
 variable "notifications_email" {

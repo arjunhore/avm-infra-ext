@@ -12,11 +12,19 @@ locals {
   }
 }
 
-data "aws_subnets" "all" {
+data "aws_subnets" "subnets" {
   filter {
     name   = "vpc-id"
     values = [var.vpc_id]
   }
+}
+
+data "aws_rds_cluster" "this" {
+  cluster_identifier = var.rds_cluster_identifier
+}
+
+data "aws_ecs_cluster" "this" {
+  cluster_name = var.ecs_cluster_name
 }
 
 ################################################################################
@@ -76,7 +84,7 @@ resource "aws_ecs_task_definition" "this" {
 
 resource "aws_ecs_service" "this" {
   name                               = local.server_namespace
-  cluster                            = var.ecs_cluster_id
+  cluster                            = data.aws_ecs_cluster.this.id
   task_definition                    = aws_ecs_task_definition.this.arn
   desired_count                      = 1
   deployment_maximum_percent         = 200
@@ -85,7 +93,7 @@ resource "aws_ecs_service" "this" {
 
   network_configuration {
     security_groups  = [aws_security_group.ecs_service_security_group.id]
-    subnets          = toset(data.aws_subnets.all.ids)
+    subnets          = toset(data.aws_subnets.subnets.ids)
     assign_public_ip = true
   }
 
@@ -199,7 +207,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage_high" {
   alarm_actions = [aws_appautoscaling_policy.autoscaling_up_policy.arn]
 
   dimensions = {
-    ClusterName = var.ecs_cluster_id
+    ClusterName = data.aws_ecs_cluster.this.id
     ServiceName = aws_ecs_service.this.name
   }
 
@@ -219,7 +227,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage_low" {
   alarm_actions = [aws_appautoscaling_policy.autoscaling_down_policy.arn]
 
   dimensions = {
-    ClusterName = var.ecs_cluster_id
+    ClusterName = data.aws_ecs_cluster.this.id
     ServiceName = aws_ecs_service.this.name
   }
 
@@ -378,8 +386,35 @@ module "cdn" {
 # Supporting Resources
 ################################################################################
 
+resource "random_password" "password" {
+  count   = 1
+  length  = 30
+  special = true
+}
+
 resource "aws_secretsmanager_secret" "this" {
   name = local.server_namespace
+}
+
+resource "aws_secretsmanager_secret_version" "this" {
+  secret_id     = aws_secretsmanager_secret.this.id
+  secret_string = jsonencode(
+    {
+      "NODE_ENV" : "production",
+      "AWS_REGION" : "us-east-1",
+      "AWS_DOCUMENTS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_documents.bucket,
+      "DB_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/${data.aws_rds_cluster.this.database_name}",
+      "DB_VECTOR_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/vectordb",
+      "UI_HOST" : "https://${local.domain_name}"
+      "API_KEY" : random_password.password[0].result,
+      "FIREBASE_PRIVATE_KEY" : "<REPLACE_ME>",
+      "FIREBASE_CLIENT_EMAIL" : "<REPLACE_ME>",
+      "FIREBASE_PROJECT_ID" : "<REPLACE_ME>",
+    })
+
+  lifecycle {
+    ignore_changes = [secret_string,]
+  }
 }
 
 resource "aws_cloudwatch_log_group" "this" {

@@ -134,6 +134,24 @@ resource "aws_secretsmanager_secret" "this" {
   name = "${local.namespace}-webapp"
 }
 
+resource "aws_secretsmanager_secret_version" "this" {
+  secret_id     = aws_secretsmanager_secret.this.id
+  secret_string = jsonencode(
+    {
+      "REACT_APP_FIREBASE_API_KEY" : "<REPLACE_ME>",
+      "REACT_APP_FIREBASE_AUTH_DOMAIN" : "<REPLACE_ME>",
+      "REACT_APP_FIREBASE_PROJECT_ID" : "<REPLACE_ME>",
+      "REACT_APP_FIREBASE_STORAGE_BUCKET" : "<REPLACE_ME>",
+      "REACT_APP_FIREBASE_MESSAGING_SENDER_ID" : "<REPLACE_ME>",
+      "REACT_APP_FIREBASE_APP_ID" : "<REPLACE_ME>",
+      "REACT_APP_FIREBASE_MEASUREMENT_ID" : "<REPLACE_ME>",
+    })
+
+  lifecycle {
+    ignore_changes = [secret_string,]
+  }
+}
+
 resource "aws_route53_record" "route53_wildcard_record" {
   zone_id = var.route53_zone_id
   name    = local.domain_name
