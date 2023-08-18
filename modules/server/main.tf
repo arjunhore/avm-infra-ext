@@ -62,12 +62,6 @@ resource "aws_ecs_task_definition" "this" {
             hostPort : var.docker_container_port
           }
         ]
-        environmentFiles : [
-          {
-            "value" : "${aws_s3_bucket.aws_s3_bucket_envs.arn}/server.env",
-            "type" : "s3"
-          }
-        ],
         environment = [
           {
             "name" : "AWS_REGION",
@@ -238,10 +232,6 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage_low" {
 # S3
 ################################################################################
 
-resource "aws_s3_bucket" "aws_s3_bucket_envs" {
-  bucket = "${local.workspace_namespace}-envs"
-}
-
 resource "aws_s3_bucket" "aws_s3_bucket_documents" {
   bucket = "${local.workspace_namespace}-documents"
 }
@@ -310,13 +300,6 @@ resource "aws_s3_bucket_cors_configuration" "aws_s3_bucket_documents_cors" {
     allowed_methods = ["GET"]
     allowed_origins = ["*"]
   }
-}
-
-resource "aws_s3_bucket_logging" "aws_s3_bucket_logging_envs" {
-  bucket = aws_s3_bucket.aws_s3_bucket_envs.id
-
-  target_bucket = aws_s3_bucket.aws_s3_bucket_logs.id
-  target_prefix = aws_s3_bucket.aws_s3_bucket_envs.bucket
 }
 
 resource "aws_s3_bucket_logging" "aws_s3_bucket_logging_documents" {
@@ -403,6 +386,7 @@ resource "aws_secretsmanager_secret_version" "this" {
       "NODE_ENV" : "production",
       "AWS_REGION" : "us-east-1",
       "AWS_DOCUMENTS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_documents.bucket,
+      "AWS_ASSETS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_assets.bucket,
       "DB_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/${data.aws_rds_cluster.this.database_name}",
       "DB_VECTOR_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/vectordb",
       "UI_HOST" : "https://${local.domain_name}"
