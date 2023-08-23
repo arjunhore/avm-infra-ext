@@ -19,7 +19,7 @@ variable "root_domain_name" {
 variable "notifications_email" {
   description = "The email address for notifications"
   type        = string
-  default     = "support@ddvaluemachine.com"
+  default     = "support@addvaluemachine.com"
 }
 
 variable "rds_master_username" {

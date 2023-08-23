@@ -700,6 +700,19 @@ module "bastion" {
 }
 
 ################################################################################
+# CI/CD Module
+################################################################################
+
+module "ci-cd" {
+  source = "./modules/ci-cd"
+
+  region                          = local.region
+  environment                     = local.environment
+  s3_bucket_name_webapp           = module.web.s3_bucket_name
+  secretsmanager_secret_id_webapp = module.web.secretsmanager_secret_id
+}
+
+################################################################################
 # Vanta Module
 ################################################################################
 
