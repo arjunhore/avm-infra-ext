@@ -44,6 +44,55 @@ resource "aws_s3_bucket" "s3_bucket_codepipeline" {
 }
 
 ################################################################################
+# Lambda Resources
+################################################################################
+
+module "lambda_function" {
+  source  = "terraform-aws-modules/lambda/aws"
+  version = "~> 6.0"
+
+  function_name = "${local.namespace}-invalidate-cloudfront"
+  description   = "Invalidate CloudFront"
+  handler       = "invalidate-cloudfront.lambda_handler"
+  runtime       = "python3.8"
+
+  source_path = "${path.module}/files/invalidate-cloudfront.py"
+
+  attach_policy_json = true
+  policy_json        = jsonencode(
+    {
+      "Version" : "2012-10-17",
+      "Statement" : [
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "codepipeline:PutJobFailureResult",
+            "codepipeline:PutJobSuccessResult",
+          ],
+          "Resource" : ["*"]
+        },
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "cloudfront:CreateInvalidation"
+          ],
+          "Resource" : ["*"]
+        },
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource" : ["*"]
+        }
+      ]
+    })
+
+  tags = local.tags
+}
+
+################################################################################
 # CodePipeline WebApp Resources
 ################################################################################
 
@@ -169,6 +218,25 @@ resource "aws_codepipeline" "aws_codepipeline_webapp" {
     }
   }
 
+  stage {
+    name = "Cache"
+
+    action {
+      name             = "Cloudfront"
+      category         = "Invoke"
+      owner            = "AWS"
+      provider         = "Lambda"
+      input_artifacts  = []
+      output_artifacts = []
+      version          = "1"
+
+      configuration = {
+        FunctionName   = module.lambda_function.lambda_function_name
+        UserParameters = var.cloudfront_distribution_id_webapp
+      }
+    }
+  }
+
   tags = local.tags
 }
 
@@ -261,6 +329,16 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_webapp" {
           ],
           "Resource" : [
             data.aws_secretsmanager_secret.secretsmanager_secret_webapp.arn
+          ],
+        },
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "lambda:InvokeFunction",
+            "lambda:ListFunctions",
+          ],
+          "Resource" : [
+            module.lambda_function.lambda_function_arn
           ],
         }
       ]

@@ -49,6 +49,11 @@ variable "ecs_service_name_server" {
   type        = string
 }
 
+variable "cloudfront_distribution_id_webapp" {
+  description = "The CloudFront distribution ID for the webapp"
+  type        = string
+}
+
 variable "aws_account_id_root" {
   description = "The AWS root account ID"
   type        = string
