@@ -13,9 +13,7 @@ phases:
 
   build:
     commands:
-      - docker run -e AWS_REGION=$AWS_REGION -e SECRETS_MANAGER_SECRET_ID=$SECRETS_MANAGER_SECRET_ID -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI -v $(pwd)/build:/app/build $ECR_IMAGE_URI # Run the build script inside the container
+      - printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $ECR_IMAGE_URI > imagedefinitions.json
 
 artifacts:
-  files:
-    - '**/*'
-  base-directory: build # The build directory is where the container outputs the static files
+  files: imagedefinitions.json

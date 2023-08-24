@@ -710,8 +710,11 @@ module "ci-cd" {
   environment                     = local.environment
   s3_bucket_name_webapp           = module.web.s3_bucket_name
   secretsmanager_secret_id_webapp = module.web.secretsmanager_secret_id
+  secretsmanager_secret_id_server = module.server.secretsmanager_secret_id
   ecr_repository_url_webapp       = module.web.ecr_repository_url
   ecr_repository_url_server       = module.server.ecr_repository_url
+  ecs_cluster_name                = module.ecs.cluster_name
+  ecs_service_name_server         = module.server.ecs_service_name
 }
 
 ################################################################################
