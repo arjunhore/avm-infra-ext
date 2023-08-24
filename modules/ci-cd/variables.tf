@@ -17,3 +17,25 @@ variable "secretsmanager_secret_id_webapp" {
   description = "The Secrets Manager secret ID for the webapp"
   type        = string
 }
+
+variable "ecr_repository_url_webapp" {
+  description = "The ECR repository URL for the webapp"
+  type        = string
+}
+
+variable "ecr_repository_url_server" {
+  description = "The ECR repository URL for the server"
+  type        = string
+}
+
+variable "ecr_repository_image_tag" {
+  description = "The ECR repository image tag"
+  type        = string
+  default     = "latest"
+}
+
+variable "aws_account_id_root" {
+  description = "The AWS root account ID"
+  type        = string
+  default     = "309847704252"
+}

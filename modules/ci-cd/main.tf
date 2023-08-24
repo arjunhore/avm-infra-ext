@@ -4,6 +4,9 @@ locals {
   namespace           = "avm-${var.environment}"
   workspace_namespace = "avm-${terraform.workspace}-${var.environment}"
 
+  ecr_repository_name_webapp = split("/", var.ecr_repository_url_webapp)[1]
+  ecr_repository_name_server = split("/", var.ecr_repository_url_server)[1]
+
   tags = {
     Name        = local.namespace
     Environment = var.environment
@@ -20,21 +23,29 @@ data "aws_s3_bucket" "s3_bucket_webapp" {
   bucket = var.s3_bucket_name_webapp
 }
 
+data "aws_ecr_repository" "ecr_repository_webapp" {
+  name = local.ecr_repository_name_webapp
+}
+
+data "aws_ecr_repository" "ecr_repository_server" {
+  name = local.ecr_repository_name_server
+}
+
 ################################################################################
 # S3
 ################################################################################
 
-resource "aws_s3_bucket" "s3_bucket_codepipeline_web" {
-  bucket = "${local.workspace_namespace}-web-codepipeline"
+resource "aws_s3_bucket" "s3_bucket_codepipeline" {
+  bucket = "${local.workspace_namespace}-codepipeline"
 }
 
 ################################################################################
 # CodePipeline Resources
 ################################################################################
 
-resource "aws_codebuild_project" "codebuild_project_web" {
-  name         = "${local.namespace}-web-codebuild"
-  service_role = aws_iam_role.iam_role_codepipeline.arn
+resource "aws_codebuild_project" "codebuild_project_webapp" {
+  name         = "${local.namespace}-webapp-codebuild"
+  service_role = aws_iam_role.iam_role_codepipeline_webapp.arn
 
   artifacts {
     type = "CODEPIPELINE"
@@ -42,7 +53,7 @@ resource "aws_codebuild_project" "codebuild_project_web" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = file("${path.module}/buildspec.yml")
+    buildspec = file("${path.module}/files/buildspec-webapp.yml")
   }
 
   cache {
@@ -60,19 +71,19 @@ resource "aws_codebuild_project" "codebuild_project_web" {
 
   logs_config {
     cloudwatch_logs {
-      group_name = "${local.namespace}-web-codebuild"
+      group_name = "${local.namespace}-webapp-codebuild"
     }
   }
 
   tags = local.tags
 }
 
-resource "aws_codepipeline" "aws_codepipeline_web" {
-  name     = "${local.namespace}-web-codepipeline"
-  role_arn = aws_iam_role.iam_role_codepipeline.arn
+resource "aws_codepipeline" "aws_codepipeline_webapp" {
+  name     = "${local.namespace}-webapp-codepipeline"
+  role_arn = aws_iam_role.iam_role_codepipeline_webapp.arn
 
   artifact_store {
-    location = aws_s3_bucket.s3_bucket_codepipeline_web.bucket
+    location = aws_s3_bucket.s3_bucket_codepipeline.bucket
     type     = "S3"
   }
 
@@ -89,8 +100,8 @@ resource "aws_codepipeline" "aws_codepipeline_web" {
       version          = "1"
 
       configuration = {
-        "RepositoryName" : split("/", module.ecr.repository_url)[1],
-        "ImageTag" : "latest"
+        "RepositoryName" : local.ecr_repository_name_webapp,
+        "ImageTag" : var.ecr_repository_image_tag
       }
     }
   }
@@ -108,7 +119,7 @@ resource "aws_codepipeline" "aws_codepipeline_web" {
       version          = "1"
 
       configuration = {
-        ProjectName = aws_codebuild_project.codebuild_project_web.name
+        ProjectName = aws_codebuild_project.codebuild_project_webapp.name
         EnvironmentVariables : jsonencode([
           {
             name : "AWS_REGION",
@@ -122,12 +133,12 @@ resource "aws_codepipeline" "aws_codepipeline_web" {
           },
           {
             name : "ECR_REGISTRY",
-            value : split("/", module.ecr.repository_url)[0],
+            value : split("/", data.aws_ecr_repository.ecr_repository_webapp.repository_url)[0],
             type : "PLAINTEXT"
           },
           {
             name : "ECR_IMAGE_URI",
-            value : "${module.ecr.repository_url}:latest",
+            value : "${data.aws_ecr_repository.ecr_repository_webapp.repository_url}:${var.ecr_repository_image_tag}",
             type : "PLAINTEXT"
           },
         ])
@@ -155,8 +166,8 @@ resource "aws_codepipeline" "aws_codepipeline_web" {
   }
 }
 
-resource "aws_iam_role" "iam_role_codepipeline" {
-  name = "${local.namespace}-web-codepipeline-role"
+resource "aws_iam_role" "iam_role_codepipeline_webapp" {
+  name = "${local.namespace}-webapp-codepipeline-role"
 
   assume_role_policy = jsonencode(
     {
@@ -180,8 +191,8 @@ resource "aws_iam_role" "iam_role_codepipeline" {
     })
 }
 
-resource "aws_iam_policy" "iam_policy_policy_codepipeline" {
-  name        = "${local.namespace}-web-codepipeline-policy"
+resource "aws_iam_policy" "iam_policy_policy_codepipeline_webapp" {
+  name        = "${local.namespace}-webapp-codepipeline-policy"
   description = "Policy for CodePipeline"
 
   policy = jsonencode(
@@ -207,8 +218,8 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline" {
           ],
           "Effect" : "Allow",
           "Resource" : [
-            aws_s3_bucket.s3_bucket_codepipeline_web.arn,
-            "${aws_s3_bucket.s3_bucket_codepipeline_web.arn}/*",
+            aws_s3_bucket.s3_bucket_codepipeline.arn,
+            "${aws_s3_bucket.s3_bucket_codepipeline.arn}/*",
             data.aws_s3_bucket.s3_bucket_webapp.arn,
             "${data.aws_s3_bucket.s3_bucket_webapp.arn}/*",
           ],
@@ -248,25 +259,31 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline" {
     })
 }
 
-resource "aws_iam_role_policy_attachment" "iam_role_policy_attachment_codepipeline" {
-  role       = aws_iam_role.iam_role_codepipeline.name
-  policy_arn = aws_iam_policy.iam_policy_policy_codepipeline.arn
+resource "aws_iam_role_policy_attachment" "iam_role_policy_attachment_codepipeline_webapp" {
+  role       = aws_iam_role.iam_role_codepipeline_webapp.name
+  policy_arn = aws_iam_policy.iam_policy_policy_codepipeline_webapp.arn
 }
 
 ################################################################################
 # ECR Repository
 ################################################################################
 
-module "ecr" {
-  source = "terraform-aws-modules/ecr/aws"
-
-  repository_name                   = "${local.namespace}-webapp"
-  repository_read_write_access_arns = [data.aws_caller_identity.current.arn]
-  create_lifecycle_policy           = false
-
-  repository_image_tag_mutability = "MUTABLE"
-  repository_encryption_type      = "KMS"
-  repository_force_delete         = true
-
-  tags = local.tags
+resource "aws_ecr_registry_policy" "this" {
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "ReplicationAccessCrossAccount",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${var.aws_account_id_root}:root"
+        },
+        "Action" : [
+          "ecr:CreateRepository",
+          "ecr:ReplicateImage"
+        ],
+        "Resource" : "arn:aws:ecr:${var.region}:${data.aws_caller_identity.current.account_id}:repository/*"
+      }
+    ]
+  })
 }

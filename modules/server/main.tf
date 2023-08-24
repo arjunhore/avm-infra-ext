@@ -12,6 +12,8 @@ locals {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 data "aws_subnets" "subnets" {
   filter {
     name   = "vpc-id"
@@ -363,6 +365,41 @@ module "cdn" {
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
   }
+}
+
+################################################################################
+# ECR Repository
+################################################################################
+
+module "ecr" {
+  source = "terraform-aws-modules/ecr/aws"
+
+  repository_name                   = "avm-server"
+  repository_read_write_access_arns = [data.aws_caller_identity.current.arn]
+  create_lifecycle_policy           = true
+
+  repository_image_tag_mutability = "MUTABLE"
+  repository_encryption_type      = "KMS"
+  repository_force_delete         = true
+
+  repository_lifecycle_policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1,
+        description  = "Keep only tagged images",
+        selection    = {
+          tagStatus   = "untagged",
+          countType   = "imageCountMoreThan",
+          countNumber = 1
+        },
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+
+  tags = local.tags
 }
 
 ################################################################################
