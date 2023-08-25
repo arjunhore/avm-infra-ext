@@ -669,6 +669,10 @@ module "server" {
   ecs_cluster_name                = module.ecs.cluster_name
   rds_cluster_identifier          = module.cluster.cluster_id
   rds_master_password             = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
+
+  depends_on = [
+    module.ecs,
+  ]
 }
 
 ################################################################################
@@ -716,6 +720,11 @@ module "ci-cd" {
   ecs_cluster_name                  = module.ecs.cluster_name
   ecs_service_name_server           = module.server.ecs_service_name
   cloudfront_distribution_id_webapp = module.web.cloudfront_distribution_id
+
+  depends_on = [
+    module.web,
+    module.server,
+  ]
 }
 
 ################################################################################
