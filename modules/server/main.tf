@@ -424,6 +424,7 @@ resource "aws_secretsmanager_secret_version" "this" {
       "AWS_REGION" : "us-east-1",
       "AWS_DOCUMENTS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_documents.bucket,
       "AWS_ASSETS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_assets.bucket,
+      "AWS_DEFAULT_KMS_KEY_ID" : aws_kms_key.this.id,
       "DB_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/${data.aws_rds_cluster.this.database_name}",
       "DB_VECTOR_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/vectordb",
       "UI_HOST" : "https://${local.domain_name}"
@@ -431,11 +432,19 @@ resource "aws_secretsmanager_secret_version" "this" {
       "FIREBASE_PRIVATE_KEY" : "<REPLACE_ME>",
       "FIREBASE_CLIENT_EMAIL" : "<REPLACE_ME>",
       "FIREBASE_PROJECT_ID" : "<REPLACE_ME>",
+      "GOOGLE_DRIVE_CLIENT_ID" : "<REPLACE_ME>",
+      "GOOGLE_DRIVE_CLIENT_SECRET" : "<REPLACE_ME>",
     })
 
   lifecycle {
     ignore_changes = [secret_string,]
   }
+}
+
+resource "aws_kms_key" "this" {
+  description = "KMS for server side encryption"
+
+  tags = local.tags
 }
 
 resource "aws_cloudwatch_log_group" "this" {
@@ -525,6 +534,27 @@ resource "aws_iam_policy" "aws_iam_policy_s3" {
     })
 }
 
+resource "aws_iam_policy" "aws_iam_policy_ses" {
+  name        = "${local.namespace}-ses-policy"
+  description = "Access control for SES"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "ses:SendEmail",
+          "ses:SendRawEmail",
+          "ses:SendTemplatedEmail",
+          "ses:SendBulkTemplatedEmail"
+        ],
+        "Resource" : "arn:aws:ses:${var.region}:${var.aws_account_id_root}:identity/*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "ecs_task_role_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -555,9 +585,14 @@ resource "aws_iam_role_policy_attachment" "comprehend_ecs_task_execution_policy_
   policy_arn = "arn:aws:iam::aws:policy/ComprehendFullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "ses_ecs_task_role_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.aws_iam_policy_ses.arn
+}
+
 resource "aws_iam_role_policy_attachment" "ses_ecs_task_execution_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+  policy_arn = aws_iam_policy.aws_iam_policy_ses.arn
 }
 
 resource "aws_iam_role_policy_attachment" "s3_ecs_task_role_policy_attachment" {
