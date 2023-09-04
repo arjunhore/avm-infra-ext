@@ -434,6 +434,8 @@ resource "aws_secretsmanager_secret_version" "this" {
       "FIREBASE_PROJECT_ID" : "<REPLACE_ME>",
       "GOOGLE_DRIVE_CLIENT_ID" : "<REPLACE_ME>",
       "GOOGLE_DRIVE_CLIENT_SECRET" : "<REPLACE_ME>",
+      "AWS_SES_ACCESS_KEY" : "<REPLACE_ME>",
+      "AWS_SES_SECRET_KEY" : "<REPLACE_ME>",
     })
 
   lifecycle {
@@ -534,27 +536,6 @@ resource "aws_iam_policy" "aws_iam_policy_s3" {
     })
 }
 
-resource "aws_iam_policy" "aws_iam_policy_ses" {
-  name        = "${local.namespace}-ses-policy"
-  description = "Access control for SES"
-
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "ses:SendEmail",
-          "ses:SendRawEmail",
-          "ses:SendTemplatedEmail",
-          "ses:SendBulkTemplatedEmail"
-        ],
-        "Resource" : "arn:aws:ses:${var.region}:${var.aws_account_id_root}:identity/*"
-      }
-    ]
-  })
-}
-
 resource "aws_iam_role_policy_attachment" "ecs_task_role_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -583,16 +564,6 @@ resource "aws_iam_role_policy_attachment" "comprehend_ecs_task_policy_attachment
 resource "aws_iam_role_policy_attachment" "comprehend_ecs_task_execution_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/ComprehendFullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "ses_ecs_task_role_policy_attachment" {
-  role       = aws_iam_role.ecs_task_role.name
-  policy_arn = aws_iam_policy.aws_iam_policy_ses.arn
-}
-
-resource "aws_iam_role_policy_attachment" "ses_ecs_task_execution_policy_attachment" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = aws_iam_policy.aws_iam_policy_ses.arn
 }
 
 resource "aws_iam_role_policy_attachment" "s3_ecs_task_role_policy_attachment" {
