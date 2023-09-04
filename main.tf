@@ -721,10 +721,10 @@ module "ci-cd" {
   ecs_service_name_server           = module.server.ecs_service_name
   cloudfront_distribution_id_webapp = module.web.cloudfront_distribution_id
 
-  depends_on = [
-    module.web,
-    module.server,
-  ]
+#  depends_on = [
+#    module.web,
+#    module.server,
+#  ]
 }
 
 ################################################################################

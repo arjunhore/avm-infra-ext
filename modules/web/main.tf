@@ -134,6 +134,7 @@ module "cdn" {
 
 module "ecr" {
   source = "terraform-aws-modules/ecr/aws"
+  version = "~> 1.6.0"
 
   repository_name                   = "avm-webapp"
   repository_read_write_access_arns = [data.aws_caller_identity.current.arn]

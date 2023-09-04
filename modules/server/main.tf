@@ -98,6 +98,10 @@ resource "aws_ecs_service" "this" {
     container_name   = local.server_namespace
     container_port   = var.docker_container_port
   }
+
+  lifecycle {
+    ignore_changes = [task_definition,]
+  }
 }
 
 resource "aws_alb_target_group" "this" {
@@ -373,6 +377,7 @@ module "cdn" {
 
 module "ecr" {
   source = "terraform-aws-modules/ecr/aws"
+  version = "~> 1.6.0"
 
   repository_name                   = "avm-server"
   repository_read_write_access_arns = [data.aws_caller_identity.current.arn]
@@ -424,7 +429,7 @@ resource "aws_secretsmanager_secret_version" "this" {
       "AWS_REGION" : "us-east-1",
       "AWS_DOCUMENTS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_documents.bucket,
       "AWS_ASSETS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_assets.bucket,
-      "AWS_DEFAULT_KMS_KEY_ID" : aws_kms_key.this.id,
+      "AWS_DEFAULT_KMS_KEY_ID" : aws_kms_key.kms_key_server.key_id,
       "DB_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/${data.aws_rds_cluster.this.database_name}",
       "DB_VECTOR_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/vectordb",
       "UI_HOST" : "https://${local.domain_name}"
@@ -443,10 +448,15 @@ resource "aws_secretsmanager_secret_version" "this" {
   }
 }
 
-resource "aws_kms_key" "this" {
+resource "aws_kms_key" "kms_key_server" {
   description = "KMS for server side encryption"
 
   tags = local.tags
+}
+
+resource "aws_kms_alias" "kms_alias_server" {
+  name          = "alias/${local.server_namespace}-kms-key"
+  target_key_id = aws_kms_key.kms_key_server.key_id
 }
 
 resource "aws_cloudwatch_log_group" "this" {
