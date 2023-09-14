@@ -207,7 +207,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage_high" {
   alarm_actions = [aws_appautoscaling_policy.autoscaling_up_policy.arn]
 
   dimensions = {
-    ClusterName = data.aws_ecs_cluster.this.id
+    ClusterName = data.aws_ecs_cluster.this.cluster_name
     ServiceName = aws_ecs_service.this.name
   }
 
@@ -227,7 +227,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage_low" {
   alarm_actions = [aws_appautoscaling_policy.autoscaling_down_policy.arn]
 
   dimensions = {
-    ClusterName = data.aws_ecs_cluster.this.id
+    ClusterName = data.aws_ecs_cluster.this.cluster_name
     ServiceName = aws_ecs_service.this.name
   }
 
@@ -376,7 +376,7 @@ module "cdn" {
 ################################################################################
 
 module "ecr" {
-  source = "terraform-aws-modules/ecr/aws"
+  source  = "terraform-aws-modules/ecr/aws"
   version = "~> 1.6.0"
 
   repository_name                   = "avm-server"
