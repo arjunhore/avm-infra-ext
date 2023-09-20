@@ -60,8 +60,8 @@ resource "aws_ecs_task_definition" "this" {
         portMappings : [
           {
             protocol : "tcp",
-            containerPort : var.docker_container_port,
-            hostPort : var.docker_container_port
+            containerPort : 443,
+            hostPort : 443,
           }
         ]
         environment = [
@@ -96,7 +96,7 @@ resource "aws_ecs_service" "this" {
   load_balancer {
     target_group_arn = aws_alb_target_group.this.arn
     container_name   = local.server_namespace
-    container_port   = var.docker_container_port
+    container_port   = 443
   }
 
   lifecycle {
@@ -106,7 +106,7 @@ resource "aws_ecs_service" "this" {
 
 resource "aws_alb_target_group" "this" {
   name                 = "${local.server_namespace}-tg"
-  port                 = var.docker_container_port
+  port                 = 443
   protocol             = "HTTP"
   vpc_id               = var.vpc_id
   target_type          = "ip"
@@ -131,8 +131,8 @@ resource "aws_security_group" "ecs_service_security_group" {
 
   ingress {
     protocol        = "tcp"
-    from_port       = var.docker_container_port
-    to_port         = var.docker_container_port
+    from_port       = 443
+    to_port         = 443
     security_groups = [var.load_balancer_security_group_id]
   }
 

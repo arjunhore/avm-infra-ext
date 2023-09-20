@@ -39,12 +39,6 @@ variable "ecr_repository_image" {
   default     = "309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-server:latest"
 }
 
-variable "docker_container_port" {
-  description = "The Docker container port number"
-  type        = number
-  default     = 3001
-}
-
 variable "autoscaling_min_instances" {
   description = "The minimum number of instances that should be running"
   type        = number
