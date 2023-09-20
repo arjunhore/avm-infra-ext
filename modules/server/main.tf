@@ -546,6 +546,27 @@ resource "aws_iam_policy" "aws_iam_policy_s3" {
     })
 }
 
+resource "aws_iam_policy" "aws_iam_policy_bedrock" {
+  name        = "${local.namespace}-bedrock-policy"
+  description = "Access control for Bedrock resources"
+
+  policy = jsonencode(
+    {
+      "Version" : "2012-10-17",
+      "Statement" : [
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "bedrock:*"
+          ],
+          "Resource" : [
+            "*",
+          ]
+        },
+      ]
+    })
+}
+
 resource "aws_iam_role_policy_attachment" "ecs_task_role_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -584,6 +605,16 @@ resource "aws_iam_role_policy_attachment" "s3_ecs_task_role_policy_attachment" {
 resource "aws_iam_role_policy_attachment" "s3_ecs_task_execution_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = aws_iam_policy.aws_iam_policy_s3.arn
+}
+
+resource "aws_iam_role_policy_attachment" "bedrock_ecs_task_role_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.aws_iam_policy_bedrock.arn
+}
+
+resource "aws_iam_role_policy_attachment" "bedrock_ecs_task_execution_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.aws_iam_policy_bedrock.arn
 }
 
 resource "aws_route53_record" "this" {
