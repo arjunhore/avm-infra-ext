@@ -88,7 +88,7 @@ resource "aws_ecs_service" "this" {
   launch_type                        = "FARGATE"
 
   network_configuration {
-    security_groups  = [aws_security_group.ecs_service_security_group.id]
+    security_groups  = [module.security_group_ecs_service.security_group_id]
     subnets          = toset(data.aws_subnets.subnets.ids)
     assign_public_ip = true
   }
@@ -107,7 +107,7 @@ resource "aws_ecs_service" "this" {
 resource "aws_alb_target_group" "this" {
   name                 = "${local.server_namespace}-tg"
   port                 = 443
-  protocol             = "HTTP"
+  protocol             = "HTTPS"
   vpc_id               = var.vpc_id
   target_type          = "ip"
   deregistration_delay = "30"
@@ -117,6 +117,7 @@ resource "aws_alb_target_group" "this" {
   }
 
   health_check {
+    protocol          = "HTTPS"
     path              = "/health"
     interval          = 30
     healthy_threshold = 2
@@ -124,24 +125,20 @@ resource "aws_alb_target_group" "this" {
   }
 }
 
-resource "aws_security_group" "ecs_service_security_group" {
-  name        = "${local.server_namespace}-ecs-sg"
-  description = "Allow all inbound traffic on the container listener port"
-  vpc_id      = var.vpc_id
+module "security_group_ecs_service" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 5.1"
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = 443
-    to_port         = 443
-    security_groups = [var.load_balancer_security_group_id]
-  }
+  name            = "${local.namespace}-server-sg"
+  description     = "Allow all inbound traffic on the container listener port"
+  vpc_id          = var.vpc_id
+  use_name_prefix = false
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_rules       = ["https-443-tcp"]
+  egress_rules        = ["all-all"]
+
+  tags = local.tags
 }
 
 ################################################################################

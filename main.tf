@@ -267,8 +267,8 @@ module "cluster" {
   monitoring_interval          = 60
 
   serverlessv2_scaling_configuration = {
-    min_capacity = 0.5
-    max_capacity = 32
+    min_capacity = 1
+    max_capacity = 16
   }
 
   instance_class = "db.serverless"
