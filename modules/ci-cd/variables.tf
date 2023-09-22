@@ -59,3 +59,14 @@ variable "aws_account_id_root" {
   type        = string
   default     = "309847704252"
 }
+
+variable "sns_topic_alerts_arn" {
+  description = "The SNS topic ARN to send alerts to"
+  type        = string
+}
+
+variable "statistic_period" {
+  description = "The number of seconds that make each statistic period."
+  type        = number
+  default     = 60
+}

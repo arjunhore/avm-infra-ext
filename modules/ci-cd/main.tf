@@ -92,6 +92,27 @@ module "lambda_function" {
   tags = local.tags
 }
 
+resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_invalidate_lambda_error_rate" {
+  alarm_name          = "${local.namespace}-invalidate-lambda-error-rate"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = var.statistic_period
+  statistic           = "Maximum"
+  threshold           = 0
+  alarm_description   = "Lambda error rate is greater than 0"
+
+  alarm_actions = [var.sns_topic_alerts_arn]
+  ok_actions    = [var.sns_topic_alerts_arn]
+
+  dimensions = {
+    FunctionName = module.lambda_function.lambda_function_name
+  }
+
+  tags = local.tags
+}
+
 ################################################################################
 # CodePipeline WebApp Resources
 ################################################################################

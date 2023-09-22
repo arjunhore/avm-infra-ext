@@ -720,6 +720,7 @@ module "ci-cd" {
   ecs_cluster_name                  = module.ecs.cluster_name
   ecs_service_name_server           = module.server.ecs_service_name
   cloudfront_distribution_id_webapp = module.web.cloudfront_distribution_id
+  sns_topic_alerts_arn              = aws_sns_topic.sns_topic_alerts.arn
 
   #  depends_on = [
   #    module.web,
