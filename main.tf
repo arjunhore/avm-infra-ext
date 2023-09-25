@@ -397,17 +397,18 @@ resource "aws_elasticache_replication_group" "redis" {
   replication_group_id = "${local.namespace}-cluster"
   description          = "Redis cluster"
 
-  engine         = "redis"
-  node_type      = "cache.t4g.medium"
-  engine_version = "7.0"
-  port           = var.redis_port
+  engine                     = "redis"
+  node_type                  = "cache.t4g.medium"
+  engine_version             = "7.0"
+  port                       = var.redis_port
+  at_rest_encryption_enabled = true
+  transit_encryption_enabled = true
+  num_cache_clusters         = 1
 
   security_group_ids         = [module.security_group_redis.security_group_id]
   subnet_group_name          = join("", aws_elasticache_subnet_group.default.*.name)
   apply_immediately          = true
   automatic_failover_enabled = false
-
-  num_cache_clusters = 1
 
   lifecycle {
     ignore_changes = [node_type,]
