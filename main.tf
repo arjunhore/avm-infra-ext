@@ -100,6 +100,7 @@ module "alb" {
   name = "${local.namespace}-alb"
 
   load_balancer_type = "application"
+  idle_timeout       = 3600
 
   vpc_id                = module.vpc.vpc_id
   subnets               = module.vpc.public_subnets
