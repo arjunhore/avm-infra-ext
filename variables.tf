@@ -46,6 +46,12 @@ variable "rds_port" {
   default     = 5432
 }
 
+variable "redis_port" {
+  type        = number
+  description = "The Redis instance port"
+  default     = 6379
+}
+
 variable "statistic_period" {
   description = "The number of seconds that make each statistic period."
   type        = number

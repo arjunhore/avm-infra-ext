@@ -29,6 +29,10 @@ data "aws_ecs_cluster" "this" {
   cluster_name = var.ecs_cluster_name
 }
 
+data "aws_elasticache_replication_group" "this" {
+  replication_group_id = var.redis_cluster_identifier
+}
+
 ################################################################################
 # ECS Resources
 ################################################################################
@@ -423,12 +427,13 @@ resource "aws_secretsmanager_secret_version" "this" {
   secret_string = jsonencode(
     {
       "NODE_ENV" : "production",
-      "AWS_REGION" : "us-east-1",
+      "AWS_REGION" : var.region,
       "AWS_DOCUMENTS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_documents.bucket,
       "AWS_ASSETS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_assets.bucket,
       "AWS_DEFAULT_KMS_KEY_ID" : aws_kms_key.kms_key_server.key_id,
       "DB_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/${data.aws_rds_cluster.this.database_name}",
       "DB_VECTOR_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/vectordb",
+      "REDIS_URI" : "redis://${data.aws_elasticache_replication_group.this.primary_endpoint_address}",
       "UI_HOST" : "https://${local.domain_name}"
       "API_KEY" : random_password.password[0].result,
       "FIREBASE_PRIVATE_KEY" : "<REPLACE_ME>",
