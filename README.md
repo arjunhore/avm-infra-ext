@@ -2,6 +2,12 @@
 
 Terraform modules for the Add Value Machine platform.
 
+## Architecture
+
+Architecture Diagram:
+
+![](docs/diagrams/architecture-diagram-v1.3.png)
+
 ### Prerequisites:
 
 To get started you will need the following:
