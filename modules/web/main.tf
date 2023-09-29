@@ -18,7 +18,8 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 
 resource "aws_s3_bucket" "aws_s3_bucket_web" {
-  bucket = "${local.workspace_namespace}-web"
+  bucket        = "${local.workspace_namespace}-web"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {
@@ -133,7 +134,7 @@ module "cdn" {
 ################################################################################
 
 module "ecr" {
-  source = "terraform-aws-modules/ecr/aws"
+  source  = "terraform-aws-modules/ecr/aws"
   version = "~> 1.6.0"
 
   repository_name                   = "avm-webapp"

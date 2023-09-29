@@ -40,7 +40,8 @@ data "aws_s3_bucket" "s3_bucket_webapp" {
 ################################################################################
 
 resource "aws_s3_bucket" "s3_bucket_codepipeline" {
-  bucket = "${local.workspace_namespace}-codepipeline"
+  bucket        = "${local.workspace_namespace}-codepipeline"
+  force_destroy = true
 }
 
 ################################################################################

@@ -102,11 +102,8 @@ variable "alb_5xx_response_threshold" {
 
 variable "workspace_iam_roles" {
   default = {
-    mcro                 = "arn:aws:iam::670255240370:role/AVMAdminRole"
     renaissance          = "arn:aws:iam::624134621134:role/AVMAdminRole"
     gap                  = "arn:aws:iam::106421789552:role/AVMAdminRole"
-    accel-kkr            = "arn:aws:iam::233888739705:role/AVMAdminRole"
-    adcb                 = "arn:aws:iam::226270385471:role/AVMAdminRole"
     firebirds            = "arn:aws:iam::181755216119:role/AVMAdminRole"
     addvaluemachine-demo = "arn:aws:iam::725002219993:role/AVMAdminRole"
     addvaluemachine      = "arn:aws:iam::902610975495:role/AVMAdminRole"

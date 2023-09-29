@@ -240,15 +240,18 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage_low" {
 ################################################################################
 
 resource "aws_s3_bucket" "aws_s3_bucket_documents" {
-  bucket = "${local.workspace_namespace}-documents"
+  bucket        = "${local.workspace_namespace}-documents"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket" "aws_s3_bucket_assets" {
-  bucket = "${local.workspace_namespace}-assets"
+  bucket        = "${local.workspace_namespace}-assets"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket" "aws_s3_bucket_logs" {
-  bucket = "${local.workspace_namespace}-bucket-access-logs"
+  bucket        = "${local.workspace_namespace}-bucket-access-logs"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {
