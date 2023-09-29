@@ -599,6 +599,16 @@ resource "aws_iam_role_policy_attachment" "comprehend_ecs_task_execution_policy_
   policy_arn = "arn:aws:iam::aws:policy/ComprehendFullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "comprehend_medical_ecs_task_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/ComprehendMedicalFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "comprehend_medical_ecs_task_execution_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/ComprehendMedicalFullAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "s3_ecs_task_role_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = aws_iam_policy.aws_iam_policy_s3.arn
