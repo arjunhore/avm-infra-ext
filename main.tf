@@ -17,7 +17,7 @@ locals {
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 
-  vanta_enabled = terraform.workspace == "mcro" ? 1 : 0
+  vanta_enabled = terraform.workspace == "addvaluemachine" ? 1 : 0
 
   tags = {
     Name        = local.namespace
@@ -743,6 +743,7 @@ module "server" {
 
   depends_on = [
     module.ecs,
+    aws_elasticache_replication_group.redis,
   ]
 }
 
