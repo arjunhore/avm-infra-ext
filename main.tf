@@ -394,6 +394,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_disk_queue_depth_hi
 ################################################################################
 
 resource "aws_elasticache_replication_group" "redis" {
+  count                = 0
   replication_group_id = "${local.namespace}-cluster"
   description          = "Redis cluster"
 
@@ -418,6 +419,7 @@ resource "aws_elasticache_replication_group" "redis" {
 }
 
 resource "aws_elasticache_subnet_group" "default" {
+  count       = 0
   name        = "${local.namespace}-redis"
   description = "Allowed subnets for Redis cluster instances"
   subnet_ids  = module.vpc.private_subnets
@@ -739,11 +741,11 @@ module "server" {
   ecs_cluster_name                = module.ecs.cluster_name
   rds_cluster_identifier          = module.cluster.cluster_id
   rds_master_password             = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
-  redis_cluster_identifier        = aws_elasticache_replication_group.redis.replication_group_id
+  # redis_cluster_identifier        = aws_elasticache_replication_group.redis.replication_group_id
 
   depends_on = [
     module.ecs,
-    aws_elasticache_replication_group.redis,
+    # aws_elasticache_replication_group.redis,
   ]
 }
 
