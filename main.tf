@@ -393,61 +393,61 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_rds_disk_queue_depth_hi
 # ElastiCache Module
 ################################################################################
 
-resource "aws_elasticache_replication_group" "redis" {
-  replication_group_id = "${local.namespace}-cluster"
-  description          = "Redis cluster"
-
-  engine                     = "redis"
-  node_type                  = "cache.t4g.medium"
-  engine_version             = "7.0"
-  port                       = var.redis_port
-  at_rest_encryption_enabled = true
-  transit_encryption_enabled = true
-  num_cache_clusters         = 1
-
-  security_group_ids         = [module.security_group_redis.security_group_id]
-  subnet_group_name          = join("", aws_elasticache_subnet_group.default.*.name)
-  apply_immediately          = true
-  automatic_failover_enabled = false
-
-  lifecycle {
-    ignore_changes = [node_type,]
-  }
-
-  tags = local.tags
-}
-
-resource "aws_elasticache_subnet_group" "default" {
-  name        = "${local.namespace}-redis"
-  description = "Allowed subnets for Redis cluster instances"
-  subnet_ids  = module.vpc.private_subnets
-
-  tags = local.tags
-}
-
-module "security_group_redis" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "~> 5.1"
-
-  name            = "${local.namespace}-redis-sg"
-  description     = "Security Group for Redis cluster"
-  vpc_id          = module.vpc.vpc_id
-  use_name_prefix = false
-
-  ingress_cidr_blocks      = ["0.0.0.0/0"]
-  ingress_with_cidr_blocks = [
-    {
-      from_port   = var.redis_port
-      to_port     = var.redis_port
-      protocol    = "tcp"
-      description = "Allow inbound traffic from existing Security Groups"
-      cidr_blocks = "0.0.0.0/0"
-    }
-  ]
-  egress_rules = ["all-all"]
-
-  tags = local.tags
-}
+#resource "aws_elasticache_replication_group" "redis" {
+#  replication_group_id = "${local.namespace}-cluster"
+#  description          = "Redis cluster"
+#
+#  engine                     = "redis"
+#  node_type                  = "cache.t4g.medium"
+#  engine_version             = "7.0"
+#  port                       = var.redis_port
+#  at_rest_encryption_enabled = true
+#  transit_encryption_enabled = true
+#  num_cache_clusters         = 1
+#
+#  security_group_ids         = [module.security_group_redis.security_group_id]
+#  subnet_group_name          = join("", aws_elasticache_subnet_group.default.*.name)
+#  apply_immediately          = true
+#  automatic_failover_enabled = false
+#
+#  lifecycle {
+#    ignore_changes = [node_type,]
+#  }
+#
+#  tags = local.tags
+#}
+#
+#resource "aws_elasticache_subnet_group" "default" {
+#  name        = "${local.namespace}-redis"
+#  description = "Allowed subnets for Redis cluster instances"
+#  subnet_ids  = module.vpc.private_subnets
+#
+#  tags = local.tags
+#}
+#
+#module "security_group_redis" {
+#  source  = "terraform-aws-modules/security-group/aws"
+#  version = "~> 5.1"
+#
+#  name            = "${local.namespace}-redis-sg"
+#  description     = "Security Group for Redis cluster"
+#  vpc_id          = module.vpc.vpc_id
+#  use_name_prefix = false
+#
+#  ingress_cidr_blocks      = ["0.0.0.0/0"]
+#  ingress_with_cidr_blocks = [
+#    {
+#      from_port   = var.redis_port
+#      to_port     = var.redis_port
+#      protocol    = "tcp"
+#      description = "Allow inbound traffic from existing Security Groups"
+#      cidr_blocks = "0.0.0.0/0"
+#    }
+#  ]
+#  egress_rules = ["all-all"]
+#
+#  tags = local.tags
+#}
 
 ################################################################################
 # Security Module
@@ -739,11 +739,11 @@ module "server" {
   ecs_cluster_name                = module.ecs.cluster_name
   rds_cluster_identifier          = module.cluster.cluster_id
   rds_master_password             = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
-  redis_cluster_identifier        = aws_elasticache_replication_group.redis.replication_group_id
+#  redis_cluster_identifier        = aws_elasticache_replication_group.redis.replication_group_id
 
   depends_on = [
     module.ecs,
-    aws_elasticache_replication_group.redis,
+#    aws_elasticache_replication_group.redis,
   ]
 }
 
