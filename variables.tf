@@ -105,6 +105,7 @@ variable "workspace_iam_roles" {
     renaissance          = "arn:aws:iam::624134621134:role/AVMAdminRole"
     gap                  = "arn:aws:iam::106421789552:role/AVMAdminRole"
     firebirds            = "arn:aws:iam::181755216119:role/AVMAdminRole"
+    incyte               = "arn:aws:iam::628335480986:role/AVMAdminRole"
     addvaluemachine-demo = "arn:aws:iam::725002219993:role/AVMAdminRole"
     addvaluemachine      = "arn:aws:iam::902610975495:role/AVMAdminRole"
   }

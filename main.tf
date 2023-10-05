@@ -796,10 +796,10 @@ module "ci-cd" {
   cloudfront_distribution_id_webapp = module.web.cloudfront_distribution_id
   sns_topic_alerts_arn              = aws_sns_topic.sns_topic_alerts.arn
 
-  #  depends_on = [
-  #    module.web,
-  #    module.server,
-  #  ]
+  depends_on = [
+    module.web,
+    module.server,
+  ]
 }
 
 ################################################################################
