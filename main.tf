@@ -125,11 +125,12 @@ module "alb" {
       port            = 443
       protocol        = "HTTPS"
       certificate_arn = module.acm_certificate.acm_certificate_arn
-      action_type     = "fixed-response"
-      fixed_response  = {
-        content_type = "text/plain"
-        message_body = "Unauthorized"
-        status_code  = "401"
+      action_type     = "redirect"
+      redirect        = {
+        port        = "443"
+        protocol    = "HTTPS"
+        host        = "chat.#{host}" # Redirect to chat subdomain
+        status_code = "HTTP_301"
       }
     },
   ]
@@ -536,7 +537,19 @@ resource "aws_route53_zone" "this" {
   tags = local.tags
 }
 
-resource "aws_route53_record" "route53_wildcard_record" {
+resource "aws_route53_record" "route53_root_record" {
+  zone_id = aws_route53_zone.this.zone_id
+  name    = local.domain_name
+  type    = "A"
+
+  alias {
+    evaluate_target_health = false
+    name                   = module.alb.lb_dns_name
+    zone_id                = module.alb.lb_zone_id
+  }
+}
+
+resource "aws_route53_record" "route53_server_record" {
   zone_id = aws_route53_zone.this.zone_id
   name    = "api.${local.domain_name}"
   type    = "A"
