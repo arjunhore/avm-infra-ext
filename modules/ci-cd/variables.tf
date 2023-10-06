@@ -13,8 +13,18 @@ variable "s3_bucket_name_webapp" {
   type        = string
 }
 
+variable "s3_bucket_name_chat" {
+  description = "The S3 bucket name for the chat"
+  type        = string
+}
+
 variable "secretsmanager_secret_id_webapp" {
   description = "The Secrets Manager secret ID for the webapp"
+  type        = string
+}
+
+variable "secretsmanager_secret_id_chat" {
+  description = "The Secrets Manager secret ID for the chat"
   type        = string
 }
 
@@ -25,6 +35,11 @@ variable "secretsmanager_secret_id_server" {
 
 variable "ecr_repository_url_webapp" {
   description = "The ECR repository URL for the webapp"
+  type        = string
+}
+
+variable "ecr_repository_url_chat" {
+  description = "The ECR repository URL for the chat"
   type        = string
 }
 
@@ -51,6 +66,11 @@ variable "ecs_service_name_server" {
 
 variable "cloudfront_distribution_id_webapp" {
   description = "The CloudFront distribution ID for the webapp"
+  type        = string
+}
+
+variable "cloudfront_distribution_id_chat" {
+  description = "The CloudFront distribution ID for the chat"
   type        = string
 }
 

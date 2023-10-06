@@ -765,6 +765,21 @@ module "web" {
 }
 
 ################################################################################
+# Chat Module
+################################################################################
+
+module "chat" {
+  source = "./modules/chat"
+
+  region          = local.region
+  environment     = local.environment
+  domain_name     = local.domain_name
+  certificate_arn = module.acm_certificate.acm_certificate_arn
+  route53_zone_id = aws_route53_zone.this.zone_id
+  web_acl_arn     = aws_wafv2_web_acl.web_acl_cloudfront.arn
+}
+
+################################################################################
 # Bastion Module
 ################################################################################
 
@@ -787,17 +802,22 @@ module "ci-cd" {
   region                            = local.region
   environment                       = local.environment
   s3_bucket_name_webapp             = module.web.s3_bucket_name
+  s3_bucket_name_chat               = module.chat.s3_bucket_name
   secretsmanager_secret_id_webapp   = module.web.secretsmanager_secret_id
+  secretsmanager_secret_id_chat     = module.chat.secretsmanager_secret_id
   secretsmanager_secret_id_server   = module.server.secretsmanager_secret_id
   ecr_repository_url_webapp         = module.web.ecr_repository_url
+  ecr_repository_url_chat           = module.chat.ecr_repository_url
   ecr_repository_url_server         = module.server.ecr_repository_url
   ecs_cluster_name                  = module.ecs.cluster_name
   ecs_service_name_server           = module.server.ecs_service_name
   cloudfront_distribution_id_webapp = module.web.cloudfront_distribution_id
+  cloudfront_distribution_id_chat   = module.chat.cloudfront_distribution_id
   sns_topic_alerts_arn              = aws_sns_topic.sns_topic_alerts.arn
 
   depends_on = [
     module.web,
+    module.chat,
     module.server,
   ]
 }

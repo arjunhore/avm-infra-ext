@@ -17,13 +17,13 @@ data "aws_caller_identity" "current" {}
 # S3
 ################################################################################
 
-resource "aws_s3_bucket" "aws_s3_bucket_web" {
-  bucket        = "${local.workspace_namespace}-web"
+resource "aws_s3_bucket" "aws_s3_bucket_chat" {
+  bucket        = "${local.workspace_namespace}-chat"
   force_destroy = true
 }
 
 resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {
-  bucket = aws_s3_bucket.aws_s3_bucket_web.id
+  bucket = aws_s3_bucket.aws_s3_bucket_chat.id
   policy = jsonencode(
     {
       "Version" : "2008-10-17",
@@ -34,7 +34,7 @@ resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {
             "Service" : "cloudfront.amazonaws.com"
           },
           "Action" : "s3:GetObject",
-          "Resource" : "${aws_s3_bucket.aws_s3_bucket_web.arn}/*",
+          "Resource" : "${aws_s3_bucket.aws_s3_bucket_chat.arn}/*",
           "Condition" : {
             "StringEquals" : {
               "AWS:SourceArn" : module.cdn.cloudfront_distribution_arn
@@ -46,8 +46,8 @@ resource "aws_s3_bucket_policy" "aws_s3_bucket_policy_cloudfront_oai" {
   )
 }
 
-resource "aws_s3_bucket_cors_configuration" "aws_s3_bucket_web_cors" {
-  bucket = aws_s3_bucket.aws_s3_bucket_web.id
+resource "aws_s3_bucket_cors_configuration" "aws_s3_bucket_chat_cors" {
+  bucket = aws_s3_bucket.aws_s3_bucket_chat.id
 
   cors_rule {
     allowed_headers = ["*"]
@@ -81,7 +81,7 @@ module "cdn" {
 
   create_origin_access_control = true
   origin_access_control        = {
-    web_s3_oac = {
+    chat_s3_oac = {
       description      = "CloudFront access for S3"
       origin_type      = "s3"
       signing_behavior = "always"
@@ -90,14 +90,14 @@ module "cdn" {
   }
 
   origin = {
-    web_s3 = {
-      domain_name           = aws_s3_bucket.aws_s3_bucket_web.bucket_regional_domain_name
-      origin_access_control = "web_s3_oac" # key in `origin_access_control`
+    chat_s3 = {
+      domain_name           = aws_s3_bucket.aws_s3_bucket_chat.bucket_regional_domain_name
+      origin_access_control = "chat_s3_oac" # key in `origin_access_control`
     }
   }
 
   default_cache_behavior = {
-    target_origin_id       = "web_s3"
+    target_origin_id       = "chat_s3"
     viewer_protocol_policy = "allow-all"
 
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
@@ -137,7 +137,7 @@ module "ecr" {
   source  = "terraform-aws-modules/ecr/aws"
   version = "~> 1.6.0"
 
-  repository_name                   = "avm-webapp"
+  repository_name                   = "avm-chat"
   repository_read_write_access_arns = [data.aws_caller_identity.current.arn]
   create_lifecycle_policy           = true
 
@@ -170,7 +170,7 @@ module "ecr" {
 ################################################################################
 
 resource "aws_secretsmanager_secret" "this" {
-  name = "${local.namespace}-webapp"
+  name = "${local.namespace}-chat"
 }
 
 resource "aws_secretsmanager_secret_version" "this" {
@@ -193,7 +193,7 @@ resource "aws_secretsmanager_secret_version" "this" {
 
 resource "aws_route53_record" "route53_wildcard_record" {
   zone_id = var.route53_zone_id
-  name    = "admin.${local.domain_name}"
+  name    = "chat.${local.domain_name}"
   type    = "A"
 
   alias {
