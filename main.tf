@@ -125,11 +125,12 @@ module "alb" {
       port            = 443
       protocol        = "HTTPS"
       certificate_arn = module.acm_certificate.acm_certificate_arn
-      action_type     = "fixed-response"
-      fixed_response  = {
-        content_type = "text/plain"
-        message_body = "Unauthorized"
-        status_code  = "401"
+      action_type     = "redirect"
+      redirect        = {
+        port        = "443"
+        protocol    = "HTTPS"
+        host        = "chat.#{host}" # Redirect to chat subdomain
+        status_code = "HTTP_301"
       }
     },
   ]
@@ -524,6 +525,8 @@ module "acm_certificate" {
   subject_alternative_names = [
     "api.${local.domain_name}",
     "assets.${local.domain_name}",
+    "chat.${local.domain_name}",
+    "admin.${local.domain_name}",
   ]
 
   tags = local.tags
@@ -536,7 +539,19 @@ resource "aws_route53_zone" "this" {
   tags = local.tags
 }
 
-resource "aws_route53_record" "route53_wildcard_record" {
+resource "aws_route53_record" "route53_root_record" {
+  zone_id = aws_route53_zone.this.zone_id
+  name    = local.domain_name
+  type    = "A"
+
+  alias {
+    evaluate_target_health = false
+    name                   = module.alb.lb_dns_name
+    zone_id                = module.alb.lb_zone_id
+  }
+}
+
+resource "aws_route53_record" "route53_server_record" {
   zone_id = aws_route53_zone.this.zone_id
   name    = "api.${local.domain_name}"
   type    = "A"
@@ -765,6 +780,21 @@ module "web" {
 }
 
 ################################################################################
+# Chat Module
+################################################################################
+
+module "chat" {
+  source = "./modules/chat"
+
+  region          = local.region
+  environment     = local.environment
+  domain_name     = local.domain_name
+  certificate_arn = module.acm_certificate.acm_certificate_arn
+  route53_zone_id = aws_route53_zone.this.zone_id
+  web_acl_arn     = aws_wafv2_web_acl.web_acl_cloudfront.arn
+}
+
+################################################################################
 # Bastion Module
 ################################################################################
 
@@ -787,17 +817,22 @@ module "ci-cd" {
   region                            = local.region
   environment                       = local.environment
   s3_bucket_name_webapp             = module.web.s3_bucket_name
+  s3_bucket_name_chat               = module.chat.s3_bucket_name
   secretsmanager_secret_id_webapp   = module.web.secretsmanager_secret_id
+  secretsmanager_secret_id_chat     = module.chat.secretsmanager_secret_id
   secretsmanager_secret_id_server   = module.server.secretsmanager_secret_id
   ecr_repository_url_webapp         = module.web.ecr_repository_url
+  ecr_repository_url_chat           = module.chat.ecr_repository_url
   ecr_repository_url_server         = module.server.ecr_repository_url
   ecs_cluster_name                  = module.ecs.cluster_name
   ecs_service_name_server           = module.server.ecs_service_name
   cloudfront_distribution_id_webapp = module.web.cloudfront_distribution_id
+  cloudfront_distribution_id_chat   = module.chat.cloudfront_distribution_id
   sns_topic_alerts_arn              = aws_sns_topic.sns_topic_alerts.arn
 
   depends_on = [
     module.web,
+    module.chat,
     module.server,
   ]
 }
