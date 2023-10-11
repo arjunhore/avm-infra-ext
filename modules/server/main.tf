@@ -575,6 +575,27 @@ resource "aws_iam_policy" "aws_iam_policy_bedrock" {
     })
 }
 
+resource "aws_iam_policy" "aws_iam_policy_sagemaker" {
+  name        = "${local.namespace}-sagemaker-policy"
+  description = "Access control for Sagemaker resources"
+
+  policy = jsonencode(
+    {
+      "Version" : "2012-10-17",
+      "Statement" : [
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "sagemaker:*"
+          ],
+          "Resource" : [
+            "*",
+          ]
+        },
+      ]
+    })
+}
+
 resource "aws_iam_role_policy_attachment" "ecs_task_role_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -633,6 +654,16 @@ resource "aws_iam_role_policy_attachment" "bedrock_ecs_task_role_policy_attachme
 resource "aws_iam_role_policy_attachment" "bedrock_ecs_task_execution_policy_attachment" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = aws_iam_policy.aws_iam_policy_bedrock.arn
+}
+
+resource "aws_iam_role_policy_attachment" "sagemaker_ecs_task_role_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.aws_iam_policy_sagemaker.arn
+}
+
+resource "aws_iam_role_policy_attachment" "sagemaker_ecs_task_execution_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.aws_iam_policy_sagemaker.arn
 }
 
 resource "aws_route53_record" "this" {
