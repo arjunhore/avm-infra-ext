@@ -71,7 +71,8 @@ module "cdn" {
   source  = "terraform-aws-modules/cloudfront/aws"
   version = "~> 3.2.1"
 
-  aliases = [local.domain_name]
+  aliases = ["chat.${local.domain_name}"]
+  comment = "chat"
 
   enabled             = true
   is_ipv6_enabled     = true
@@ -127,6 +128,8 @@ module "cdn" {
       response_page_path    = "/index.html"
     },
   ]
+
+  tags = local.tags
 }
 
 ################################################################################

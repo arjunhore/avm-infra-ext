@@ -525,6 +525,8 @@ module "acm_certificate" {
   subject_alternative_names = [
     "api.${local.domain_name}",
     "assets.${local.domain_name}",
+    "chat.${local.domain_name}",
+    "admin.${local.domain_name}",
   ]
 
   tags = local.tags
