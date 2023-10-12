@@ -1,9 +1,5 @@
 provider "aws" {
   region = local.region
-
-  assume_role {
-    role_arn = var.workspace_iam_roles[terraform.workspace]
-  }
 }
 
 locals {
@@ -16,8 +12,6 @@ locals {
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
-
-  vanta_enabled = terraform.workspace == "addvaluemachine" ? 1 : 0
 
   tags = {
     Name        = local.namespace
