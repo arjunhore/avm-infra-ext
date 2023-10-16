@@ -421,7 +421,7 @@ resource "random_password" "password" {
 }
 
 resource "aws_secretsmanager_secret" "this" {
-  name = "${local.server_namespace}/v2"
+  name = local.server_namespace
 
   recovery_window_in_days = 0
 }

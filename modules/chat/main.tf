@@ -173,7 +173,7 @@ module "ecr" {
 ################################################################################
 
 resource "aws_secretsmanager_secret" "this" {
-  name = "${local.namespace}-chat/v2"
+  name = "${local.namespace}-chat"
 
   recovery_window_in_days = 0
 }
