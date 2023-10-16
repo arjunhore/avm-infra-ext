@@ -1,7 +1,7 @@
 variable "region" {
   description = "AWS region used to provision resources (i.e. us-east-1/us-west-1)"
   type        = string
-  default     = "us-east-1"
+  default     = "me-central-1"
 }
 
 variable "environment" {
@@ -106,6 +106,7 @@ variable "workspace_iam_roles" {
     gap                  = "arn:aws:iam::106421789552:role/AVMAdminRole"
     firebirds            = "arn:aws:iam::181755216119:role/AVMAdminRole"
     incyte               = "arn:aws:iam::628335480986:role/AVMAdminRole"
+    adcb                 = "arn:aws:iam::226270385471:role/AVMAdminRole"
     addvaluemachine-demo = "arn:aws:iam::725002219993:role/AVMAdminRole"
     addvaluemachine      = "arn:aws:iam::902610975495:role/AVMAdminRole"
   }

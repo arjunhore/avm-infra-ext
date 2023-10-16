@@ -173,7 +173,9 @@ module "ecr" {
 ################################################################################
 
 resource "aws_secretsmanager_secret" "this" {
-  name = "${local.namespace}-webapp"
+  name = "${local.namespace}-webapp/v2"
+
+  recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "this" {

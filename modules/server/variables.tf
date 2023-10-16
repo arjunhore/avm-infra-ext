@@ -82,8 +82,3 @@ variable "rds_master_password" {
   type        = string
   description = "The master password for the RDS instance"
 }
-
-#variable "redis_cluster_identifier" {
-#  description = "The Redis cluster identifier"
-#  type        = string
-#}
