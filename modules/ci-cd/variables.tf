@@ -74,12 +74,6 @@ variable "cloudfront_distribution_id_chat" {
   type        = string
 }
 
-variable "aws_account_id_root" {
-  description = "The AWS root account ID"
-  type        = string
-  default     = "309847704252"
-}
-
 variable "sns_topic_alerts_arn" {
   description = "The SNS topic ARN to send alerts to"
   type        = string

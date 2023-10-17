@@ -43,7 +43,7 @@ module "bastion" {
   ami                         = var.ec2_bastion_ami_id != "" ? var.ec2_bastion_ami_id : data.aws_ami.amazon_linux_2_ssm.id
   name                        = "${local.namespace}-bastion"
   associate_public_ip_address = true
-  instance_type               = "t2.micro"
+  instance_type               = "t3.micro"
   vpc_security_group_ids      = [module.security_group_bastion.security_group_id]
   subnet_id                   = element(data.aws_subnets.private_subnets.ids, 0)
   iam_instance_profile        = module.ec2_connect_role.iam_instance_profile_name

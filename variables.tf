@@ -100,12 +100,19 @@ variable "alb_5xx_response_threshold" {
   default     = 0
 }
 
+variable "aws_account_id_root" {
+  description = "The AWS root account ID"
+  type        = string
+  default     = "309847704252"
+}
+
 variable "workspace_iam_roles" {
   default = {
     renaissance          = "arn:aws:iam::624134621134:role/AVMAdminRole"
     gap                  = "arn:aws:iam::106421789552:role/AVMAdminRole"
     firebirds            = "arn:aws:iam::181755216119:role/AVMAdminRole"
     incyte               = "arn:aws:iam::628335480986:role/AVMAdminRole"
+    adcb                 = "arn:aws:iam::226270385471:role/AVMAdminRole"
     addvaluemachine-demo = "arn:aws:iam::725002219993:role/AVMAdminRole"
     addvaluemachine      = "arn:aws:iam::902610975495:role/AVMAdminRole"
   }
