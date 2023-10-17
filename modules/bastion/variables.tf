@@ -21,7 +21,7 @@ variable "sns_topic_alerts_arn" {
 variable "ec2_bastion_ami_id" {
   type        = string
   description = "Amazon Linux AMI ID for the Bastion instance"
-  default     = "ami-08d87529c2e39849c"
+  default     = "ami-0a58b475e94715d02"
 }
 
 variable "ec2_cpu_usage_threshold" {

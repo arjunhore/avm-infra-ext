@@ -46,7 +46,7 @@ resource "aws_ecs_task_definition" "this" {
     [
       {
         name : local.server_namespace,
-        image : var.ecr_repository_image,
+        image : "${module.ecr.repository_url}:latest",
         cpu : 1024,
         memory : 2048,
         logConfiguration : {

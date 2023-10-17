@@ -639,6 +639,30 @@ resource "aws_iam_account_password_policy" "strict" {
 }
 
 ################################################################################
+# ECR Repository
+################################################################################
+
+resource "aws_ecr_registry_policy" "this" {
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "ReplicationAccessCrossAccount",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${var.aws_account_id_root}:root"
+        },
+        "Action" : [
+          "ecr:CreateRepository",
+          "ecr:ReplicateImage"
+        ],
+        "Resource" : "arn:aws:ecr:${var.region}:${data.aws_caller_identity.current.account_id}:repository/*"
+      }
+    ]
+  })
+}
+
+################################################################################
 # ACM Module
 ################################################################################
 

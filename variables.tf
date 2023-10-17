@@ -100,6 +100,12 @@ variable "alb_5xx_response_threshold" {
   default     = 0
 }
 
+variable "aws_account_id_root" {
+  description = "The AWS root account ID"
+  type        = string
+  default     = "309847704252"
+}
+
 variable "workspace_iam_roles" {
   default = {
     renaissance          = "arn:aws:iam::624134621134:role/AVMAdminRole"
