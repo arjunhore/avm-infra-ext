@@ -33,12 +33,6 @@ variable "load_balancer_security_group_id" {
   type        = string
 }
 
-variable "ecr_repository_image" {
-  description = "The ECR repository image URI"
-  type        = string
-  default     = "309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-server:latest"
-}
-
 variable "autoscaling_min_instances" {
   description = "The minimum number of instances that should be running"
   type        = number
@@ -82,8 +76,3 @@ variable "rds_master_password" {
   type        = string
   description = "The master password for the RDS instance"
 }
-
-#variable "redis_cluster_identifier" {
-#  description = "The Redis cluster identifier"
-#  type        = string
-#}

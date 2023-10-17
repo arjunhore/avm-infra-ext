@@ -98,3 +98,9 @@ variable "alb_5xx_response_threshold" {
   type        = number
   default     = 0
 }
+
+variable "aws_account_id_root" {
+  description = "The AWS root account ID"
+  type        = string
+  default     = "309847704252"
+}

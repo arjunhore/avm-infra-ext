@@ -8,6 +8,9 @@ Architecture Diagram:
 
 ![](docs/diagrams/architecture-diagram-v1.3.png)
 
+## Docs
+- [Running the Terraform setup](docs/setup.md)
+
 ### Prerequisites:
 
 To get started you will need the following:

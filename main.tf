@@ -118,7 +118,7 @@ module "alb" {
     {
       port            = 443
       protocol        = "HTTPS"
-      certificate_arn = module.acm_certificate.acm_certificate_arn
+      certificate_arn = module.acm.acm_certificate_arn
       action_type     = "redirect"
       redirect        = {
         port        = "443"
@@ -509,23 +509,6 @@ resource "aws_sns_topic_subscription" "sns_topic_subscription_notifications" {
   endpoint  = var.notifications_email
 }
 
-module "acm_certificate" {
-  source  = "terraform-aws-modules/acm/aws"
-  version = "~> 4.3.2"
-
-  domain_name = local.domain_name
-  zone_id     = aws_route53_zone.this.zone_id
-
-  subject_alternative_names = [
-    "api.${local.domain_name}",
-    "assets.${local.domain_name}",
-    "chat.${local.domain_name}",
-    "admin.${local.domain_name}",
-  ]
-
-  tags = local.tags
-}
-
 resource "aws_route53_zone" "this" {
   name          = local.domain_name
   force_destroy = false
@@ -555,89 +538,6 @@ resource "aws_route53_record" "route53_server_record" {
     name                   = module.alb.lb_dns_name
     zone_id                = module.alb.lb_zone_id
   }
-}
-
-resource "aws_wafv2_web_acl" "web_acl_cloudfront" {
-  name  = "${local.namespace}-cloudfront-waf"
-  scope = "CLOUDFRONT"
-
-  default_action {
-    allow {}
-  }
-
-  rule {
-    name     = "AWS-AWSManagedRulesAmazonIpReputationList"
-    priority = 0
-
-    override_action {
-      none {}
-    }
-
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesAmazonIpReputationList"
-        vendor_name = "AWS"
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AWS-AWSManagedRulesAmazonIpReputationList"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  rule {
-    name     = "AWS-AWSManagedRulesCommonRuleSet"
-    priority = 1
-
-    override_action {
-      none {}
-    }
-
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesCommonRuleSet"
-        vendor_name = "AWS"
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AWS-AWSManagedRulesCommonRuleSet"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  rule {
-    name     = "AWS-AWSManagedRulesKnownBadInputsRuleSet"
-    priority = 2
-
-    override_action {
-      none {}
-    }
-
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesKnownBadInputsRuleSet"
-        vendor_name = "AWS"
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AWS-AWSManagedRulesKnownBadInputsRuleSet"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  visibility_config {
-    cloudwatch_metrics_enabled = true
-    metric_name                = "${local.namespace}-cloudfront-waf"
-    sampled_requests_enabled   = true
-  }
-
-  tags = local.tags
 }
 
 resource "aws_wafv2_web_acl" "web_acl_alb" {
@@ -733,6 +633,57 @@ resource "aws_iam_account_password_policy" "strict" {
 }
 
 ################################################################################
+# ECR Repository
+################################################################################
+
+resource "aws_ecr_registry_policy" "this" {
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "ReplicationAccessCrossAccount",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${var.aws_account_id_root}:root"
+        },
+        "Action" : [
+          "ecr:CreateRepository",
+          "ecr:ReplicateImage"
+        ],
+        "Resource" : "arn:aws:ecr:${var.region}:${data.aws_caller_identity.current.account_id}:repository/*"
+      }
+    ]
+  })
+}
+
+################################################################################
+# ACM Module
+################################################################################
+
+module "acm_cloudfront" {
+  source = "./modules/acm"
+
+  environment      = local.environment
+  iam_role_arn     = var.workspace_iam_roles[terraform.workspace]
+  root_domain_name = var.root_domain_name
+  route53_zone_id  = aws_route53_zone.this.zone_id
+}
+
+module "acm" {
+  source  = "terraform-aws-modules/acm/aws"
+  version = "~> 4.3.2"
+
+  domain_name = local.domain_name
+  zone_id     = aws_route53_zone.this.zone_id
+
+  subject_alternative_names = [
+    "api.${local.domain_name}",
+  ]
+
+  tags = local.tags
+}
+
+################################################################################
 # Server Module
 ################################################################################
 
@@ -743,18 +694,17 @@ module "server" {
   environment                     = local.environment
   domain_name                     = local.domain_name
   vpc_id                          = module.vpc.vpc_id
-  certificate_arn                 = module.acm_certificate.acm_certificate_arn
+  certificate_arn                 = module.acm_cloudfront.acm_certificate_arn
   load_balancer_security_group_id = module.security_group_alb.security_group_id
   route53_zone_id                 = aws_route53_zone.this.zone_id
-  web_acl_arn                     = aws_wafv2_web_acl.web_acl_cloudfront.arn
+  web_acl_arn                     = module.acm_cloudfront.web_acl_cloudfront_arn
   ecs_cluster_name                = module.ecs.cluster_name
   rds_cluster_identifier          = module.cluster.cluster_id
   rds_master_password             = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
-  # redis_cluster_identifier        = aws_elasticache_replication_group.redis.replication_group_id
 
   depends_on = [
     module.ecs,
-    # aws_elasticache_replication_group.redis,
+    module.acm_cloudfront,
   ]
 }
 
@@ -768,9 +718,13 @@ module "web" {
   region          = local.region
   environment     = local.environment
   domain_name     = local.domain_name
-  certificate_arn = module.acm_certificate.acm_certificate_arn
+  certificate_arn = module.acm_cloudfront.acm_certificate_arn
   route53_zone_id = aws_route53_zone.this.zone_id
-  web_acl_arn     = aws_wafv2_web_acl.web_acl_cloudfront.arn
+  web_acl_arn     = module.acm_cloudfront.web_acl_cloudfront_arn
+
+  depends_on = [
+    module.acm_cloudfront,
+  ]
 }
 
 ################################################################################
@@ -783,9 +737,13 @@ module "chat" {
   region          = local.region
   environment     = local.environment
   domain_name     = local.domain_name
-  certificate_arn = module.acm_certificate.acm_certificate_arn
+  certificate_arn = module.acm_cloudfront.acm_certificate_arn
   route53_zone_id = aws_route53_zone.this.zone_id
-  web_acl_arn     = aws_wafv2_web_acl.web_acl_cloudfront.arn
+  web_acl_arn     = module.acm_cloudfront.web_acl_cloudfront_arn
+
+  depends_on = [
+    module.acm_cloudfront,
+  ]
 }
 
 ################################################################################
