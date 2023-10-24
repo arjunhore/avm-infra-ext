@@ -6,7 +6,7 @@ Terraform modules for the Add Value Machine platform.
 
 Architecture Diagram:
 
-![](docs/diagrams/architecture-diagram-v1.3.png)
+![](docs/diagrams/infrastructure-diagram-v1.0.png)
 
 ## Docs
 - [Running the Terraform setup](docs/setup.md)
