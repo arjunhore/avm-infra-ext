@@ -664,7 +664,6 @@ module "acm_cloudfront" {
   source = "./modules/acm"
 
   environment      = local.environment
-  iam_role_arn     = var.workspace_iam_roles[terraform.workspace]
   root_domain_name = var.root_domain_name
   route53_zone_id  = aws_route53_zone.this.zone_id
 }
@@ -796,7 +795,7 @@ module "ci-cd" {
 module "vanta" {
   source = "./modules/vanta"
 
-  count       = local.vanta_enabled
+  count       = 0
   region      = local.region
   environment = local.environment
 }

@@ -1,8 +1,3 @@
-variable "iam_role_arn" {
-  description = "The ARN of the IAM role to assume"
-  type        = string
-}
-
 variable "environment" {
   description = "Environment used for creating resources (will be appended to various resources)"
   type        = string

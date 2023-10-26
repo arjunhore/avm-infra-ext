@@ -1,9 +1,5 @@
 provider "aws" {
   region = "us-east-1" # CloudFront only supports ACM in "us-east-1"
-
-  assume_role {
-    role_arn = var.iam_role_arn
-  }
 }
 
 locals {
