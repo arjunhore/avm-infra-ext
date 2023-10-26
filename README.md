@@ -9,7 +9,8 @@ Architecture Diagram:
 ![](docs/diagrams/infrastructure-diagram-v1.0.png)
 
 ## Docs
-- [Running the Terraform setup](docs/setup.md)
+- [Running the Terraform setup](docs/terraform-setup.md)
+- [Deployment](docs/deployment.md)
 
 ### Prerequisites:
 

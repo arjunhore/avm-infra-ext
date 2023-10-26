@@ -10,7 +10,7 @@ To get started you will need the following:
 - [AWS CLI 2.0](https://aws.amazon.com/cli/)
 - A set of valid AWS Administrator or Power-User Credentials
 
-### Terraform Backend
+## Terraform Backend
 
 Setting up the Terraform backend. We recommend manually creating an Amazon S3 bucket to store the Terraform state file, in the target AWS account. We also recommend enabling versioning on the bucket, to allow for easy rollbacks.
 
@@ -25,7 +25,7 @@ backend "s3" {
 
 For more information about setting this up see: https://developer.hashicorp.com/terraform/language/settings/backends/s3
 
-### Terraform Configuration
+## Terraform Configuration
 
 The Terraform setup requires the following. Any additional configuration can be modified in the `variables.tf` file in the root of the Terraform project.
 - **Root Domain Name**, for example: `avm.technology`
@@ -47,7 +47,7 @@ To select the Terraform workspace, run the following command:
 terraform workspace select <WORKSPACE>
 ```
 
-### Terraform Deployment
+## Terraform Deployment
 
 To deploy the Terraform project, run the following commands:
 
@@ -66,7 +66,7 @@ If there are no errors, apply the Terraform plan by running:
 terraform apply
 ```
 
-# Manual Setup
+## Manual Configuration
 
 ### Setting up the DNS
 
