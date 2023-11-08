@@ -29,6 +29,10 @@ data "aws_ecs_cluster" "this" {
   cluster_name = var.ecs_cluster_name
 }
 
+data "aws_secretsmanager_secret_version" "this" {
+  secret_id = aws_secretsmanager_secret.this.id
+}
+
 ################################################################################
 # ECS Resources
 ################################################################################
@@ -67,12 +71,12 @@ resource "aws_ecs_task_definition" "this" {
         environment = [
           {
             "name" : "AWS_REGION",
-            "value" : var.region
-          },
-          {
-            "name" : "SECRETS_MANAGER_SECRET_ID",
-            "value" : aws_secretsmanager_secret.this.name
-          },
+            "value" : var.region,
+          }
+        ]
+        secrets = [
+          for k, v in jsondecode(data.aws_secretsmanager_secret_version.this.secret_string) :
+          { name = k, valueFrom : "${aws_secretsmanager_secret.this.arn}:${k}::" }
         ]
       }
     ])
@@ -431,7 +435,6 @@ resource "aws_secretsmanager_secret_version" "this" {
   secret_string = jsonencode(
     {
       "NODE_ENV" : "production",
-      "AWS_REGION" : var.region,
       "AWS_DOCUMENTS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_documents.bucket,
       "AWS_ASSETS_S3_BUCKET" : aws_s3_bucket.aws_s3_bucket_assets.bucket,
       "AWS_DEFAULT_KMS_KEY_ID" : aws_kms_key.kms_key_server.key_id,

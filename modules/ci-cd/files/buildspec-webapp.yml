@@ -9,11 +9,13 @@ phases:
     runtime-versions:
       nodejs: 18
     commands:
+      - pip3 install awscli --upgrade --user
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
   build:
     commands:
-      - docker run -e AWS_REGION=$AWS_REGION -e SECRETS_MANAGER_SECRET_ID=$SECRETS_MANAGER_SECRET_ID -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI -v $(pwd)/build:/app/build $ECR_IMAGE_URI # Run the build script inside the container
+      - aws secretsmanager get-secret-value --secret-id $SECRETS_MANAGER_SECRET_ID --region $AWS_REGION | jq -r '.SecretString' | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" | tee .env
+      - docker run -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI --env-file .env -v $(pwd)/build:/app/build $ECR_IMAGE_URI # Run the build script inside the container
 
 artifacts:
   files:
