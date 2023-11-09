@@ -28,12 +28,16 @@ In case you need to manually deploy the application, or the CodePipeline service
 
 Authenticate to the ECR registry:
 ```bash
-aws ecr get-login-password --region <AWS_REGION> | docker login --username AWS --password-stdin <ECR_REGISTRY>
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 309847704252.dkr.ecr.us-east-1.amazonaws.com
 ```
 
-Pull the latest Docker image:
+Pull the latest Docker images from ECR:
+- [309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-chat:latest]()
+- [309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-webapp:latest]()
+- [309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-server:latest]()
+
 ```bash
-docker pull <ECR_IMAGE_URI>
+docker pull 309847704252.dkr.ecr.us-east-1.amazonaws.com/avm-chat:latest
 ```
 
 ### Single page applications (SPA)
@@ -53,6 +57,7 @@ aws s3 sync build <S3_BUCKET> --delete
 ```bash
 aws cloudfront create-invalidation --distribution-id <CLOUDFRONT_DISTRIBUTION_ID> --paths "/*"
 ```
+> Note: You will need to repeat the above process for each frontend application.
 
 ### Webserver container
 
