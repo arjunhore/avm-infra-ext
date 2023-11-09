@@ -18,7 +18,7 @@ phases:
   build:
     commands:
       - aws secretsmanager get-secret-value --secret-id $SECRETS_MANAGER_SECRET_ID --region $AWS_REGION | jq -r '.SecretString' | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" | tee .env
-      - docker run -e AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI --env-file .env -v $(pwd)/build:/app/build $ECR_IMAGE_URI # Run the build script inside the container
+      - docker run --env-file .env -v $(pwd)/build:/app/build $ECR_IMAGE_URI # Run the build script inside the container
 
 artifacts:
   files:
