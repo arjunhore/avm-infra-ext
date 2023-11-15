@@ -22,7 +22,7 @@ phases:
 
   build:
     commands:
-      - printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $ECR_REPOSITORY:latest > imagedefinitions.json
+      - printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $ECR_REPOSITORY > imagedefinitions.json
 
 artifacts:
   files: imagedefinitions.json

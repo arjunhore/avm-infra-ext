@@ -787,6 +787,11 @@ resource "aws_codepipeline" "aws_codepipeline_server" {
             type : "PLAINTEXT"
           },
           {
+            name : "ECS_CONTAINER_NAME",
+            value : "${local.namespace}-server",
+            type : "PLAINTEXT"
+          },
+          {
             name : "CONTAINER_REGISTRY_USERNAME",
             value : "${data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn}:${"CONTAINER_REGISTRY_USERNAME"}::"
             type : "SECRETS_MANAGER"
