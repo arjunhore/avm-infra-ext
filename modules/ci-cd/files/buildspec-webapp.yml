@@ -8,8 +8,6 @@ phases:
   install:
     runtime-versions:
       nodejs: 18
-    commands:
-      - pip3 install awscli --upgrade --user
 
   pre_build:
     commands:
