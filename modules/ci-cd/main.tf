@@ -798,7 +798,7 @@ resource "aws_codepipeline" "aws_codepipeline_server" {
           },
           {
             name : "CONTAINER_REGISTRY_REPOSITORY",
-            value : var.container_registry_repository_chat,
+            value : var.container_registry_repository_server,
             type : "PLAINTEXT"
           },
           {
