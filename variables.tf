@@ -100,10 +100,17 @@ variable "alb_5xx_response_threshold" {
   default     = 0
 }
 
-variable "aws_account_id_root" {
-  description = "The AWS root account ID"
+variable "container_registry_username" {
+  description = "The GitHub Container registry username"
   type        = string
-  default     = "309847704252"
+  default     = "addvaluemachine"
+  sensitive   = true
+}
+
+variable "container_registry_token" {
+  description = "The GitHub Container registry token"
+  type        = string
+  sensitive   = true
 }
 
 variable "workspace_iam_roles" {

@@ -33,6 +33,11 @@ variable "secretsmanager_secret_id_server" {
   type        = string
 }
 
+variable "secretsmanager_secret_id_registry" {
+  description = "The Secrets Manager secret ID for the container registry"
+  type        = string
+}
+
 variable "ecr_repository_url_webapp" {
   description = "The ECR repository URL for the webapp"
   type        = string
@@ -83,4 +88,22 @@ variable "statistic_period" {
   description = "The number of seconds that make each statistic period."
   type        = number
   default     = 60
+}
+
+variable "container_registry_repository_chat" {
+  description = "The GitHub Container registry repository URL"
+  type        = string
+  default     = "ghcr.io/addvaluemachine/avm-chat"
+}
+
+variable "container_registry_repository_webapp" {
+  description = "The GitHub Container registry repository URL"
+  type        = string
+  default     = "ghcr.io/addvaluemachine/avm-webapp"
+}
+
+variable "container_registry_repository_server" {
+  description = "The GitHub Container registry repository URL"
+  type        = string
+  default     = "ghcr.io/addvaluemachine/avm-server"
 }
