@@ -13,12 +13,19 @@ phases:
 
   pre_build:
     commands:
+      - echo "Logging in to GitHub Container Registry..."
+      - echo $CONTAINER_REGISTRY_TOKEN | docker login --username $CONTAINER_REGISTRY_USERNAME --password-stdin ghcr.io
+      - docker pull $CONTAINER_REGISTRY_REPOSITORY # latest image
+
+      - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      - docker tag $CONTAINER_REGISTRY_REPOSITORY $ECR_REPOSITORY # tag the image with the ECR repository
+      - docker push $ECR_REPOSITORY # push the image to ECR
 
   build:
     commands:
       - aws secretsmanager get-secret-value --secret-id $SECRETS_MANAGER_SECRET_ID --region $AWS_REGION | jq -r '.SecretString' | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" | tee .env
-      - docker run --env-file .env -v $(pwd)/build:/app/build $ECR_IMAGE_URI # Run the build script inside the container
+      - docker run --env-file .env -v $(pwd)/build:/app/build $ECR_REPOSITORY # Run the build script inside the container
 
 artifacts:
   files:

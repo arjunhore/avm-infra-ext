@@ -8,12 +8,21 @@ phases:
   install:
     runtime-versions:
       nodejs: 18
+
+  pre_build:
     commands:
+      - echo "Logging in to GitHub Container Registry..."
+      - echo $CONTAINER_REGISTRY_TOKEN | docker login --username $CONTAINER_REGISTRY_USERNAME --password-stdin ghcr.io
+      - docker pull $CONTAINER_REGISTRY_REPOSITORY # latest image
+
+      - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      - docker tag $CONTAINER_REGISTRY_REPOSITORY $ECR_REPOSITORY # tag the image with the ECR repository
+      - docker push $ECR_REPOSITORY # push the image to ECR
 
   build:
     commands:
-      - printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $ECR_IMAGE_URI > imagedefinitions.json
+      - printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $$ECR_REPOSITORY:latest > imagedefinitions.json
 
 artifacts:
   files: imagedefinitions.json

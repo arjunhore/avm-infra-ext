@@ -76,3 +76,9 @@ variable "rds_master_password" {
   type        = string
   description = "The master password for the RDS instance"
 }
+
+variable "ecr_image_tag" {
+  description = "The ECR image tag"
+  type        = string
+  default     = "latest"
+}
