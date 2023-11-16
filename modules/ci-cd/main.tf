@@ -376,7 +376,12 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_webapp" {
             "ecr:GetDownloadUrlForLayer",
             "ecr:BatchGetImage",
             "ecr:DescribeImages",
-            "ecr:PutImage",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetAuthorizationToken",
+            "ecr:UploadLayerPart",
+            "ecr:InitiateLayerUpload",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:PutImage"
           ],
           "Resource" : ["*"]
         },
@@ -653,7 +658,12 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_chat" {
             "ecr:GetDownloadUrlForLayer",
             "ecr:BatchGetImage",
             "ecr:DescribeImages",
-            "ecr:PutImage",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetAuthorizationToken",
+            "ecr:UploadLayerPart",
+            "ecr:InitiateLayerUpload",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:PutImage"
           ],
           "Resource" : ["*"]
         },
@@ -926,7 +936,12 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_server" {
             "ecr:GetDownloadUrlForLayer",
             "ecr:BatchGetImage",
             "ecr:DescribeImages",
-            "ecr:PutImage",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetAuthorizationToken",
+            "ecr:UploadLayerPart",
+            "ecr:InitiateLayerUpload",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:PutImage"
           ],
           "Resource" : ["*"]
         },
