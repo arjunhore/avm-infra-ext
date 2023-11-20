@@ -14,6 +14,8 @@ locals {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 data "aws_ecr_repository" "ecr_repository_webapp" {
   name = local.ecr_repository_name_webapp
 }
@@ -38,6 +40,10 @@ data "aws_secretsmanager_secret" "secretsmanager_secret_server" {
   name = var.secretsmanager_secret_id_server
 }
 
+data "aws_secretsmanager_secret" "secretsmanager_secret_registry" {
+  name = var.secretsmanager_secret_id_registry
+}
+
 data "aws_s3_bucket" "s3_bucket_webapp" {
   bucket = var.s3_bucket_name_webapp
 }
@@ -53,6 +59,20 @@ data "aws_s3_bucket" "s3_bucket_chat" {
 resource "aws_s3_bucket" "s3_bucket_codepipeline" {
   bucket        = "${local.workspace_namespace}-codepipeline"
   force_destroy = true
+}
+
+resource "aws_s3_bucket_versioning" "s3_bucket_versioning_codepipeline" {
+  bucket = aws_s3_bucket.s3_bucket_codepipeline.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_object" "empty" {
+  bucket = aws_s3_bucket.s3_bucket_codepipeline.bucket
+  key    = "empty.zip"
+  source = "${path.module}/files/empty.zip"
+  etag   = filemd5("${path.module}/files/empty.zip")
 }
 
 ################################################################################
@@ -180,14 +200,14 @@ resource "aws_codepipeline" "aws_codepipeline_webapp" {
       name             = "Source"
       category         = "Source"
       owner            = "AWS"
-      provider         = "ECR"
+      provider         = "S3"
       input_artifacts  = []
       output_artifacts = ["source"]
       version          = "1"
 
       configuration = {
-        "RepositoryName" : local.ecr_repository_name_webapp,
-        "ImageTag" : var.ecr_repository_image_tag
+        "S3Bucket" : aws_s3_bucket.s3_bucket_codepipeline.bucket,
+        "S3ObjectKey" : aws_s3_object.empty.key,
       }
     }
   }
@@ -218,13 +238,28 @@ resource "aws_codepipeline" "aws_codepipeline_webapp" {
             type : "PLAINTEXT"
           },
           {
-            name : "ECR_REGISTRY",
-            value : split("/", data.aws_ecr_repository.ecr_repository_webapp.repository_url)[0],
+            name : "CONTAINER_REGISTRY_USERNAME",
+            value : "${data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn}:${"CONTAINER_REGISTRY_USERNAME"}::"
+            type : "SECRETS_MANAGER"
+          },
+          {
+            name : "CONTAINER_REGISTRY_TOKEN",
+            value : "${data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn}:${"CONTAINER_REGISTRY_TOKEN"}::"
+            type : "SECRETS_MANAGER"
+          },
+          {
+            name : "CONTAINER_REGISTRY_REPOSITORY",
+            value : var.container_registry_repository_webapp,
             type : "PLAINTEXT"
           },
           {
-            name : "ECR_IMAGE_URI",
-            value : "${data.aws_ecr_repository.ecr_repository_webapp.repository_url}:${var.ecr_repository_image_tag}",
+            name : "ECR_REGISTRY",
+            value : "${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com"
+            type : "PLAINTEXT"
+          },
+          {
+            name : "ECR_REPOSITORY",
+            value : data.aws_ecr_repository.ecr_repository_webapp.repository_url,
             type : "PLAINTEXT"
           },
         ])
@@ -341,6 +376,12 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_webapp" {
             "ecr:GetDownloadUrlForLayer",
             "ecr:BatchGetImage",
             "ecr:DescribeImages",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetAuthorizationToken",
+            "ecr:UploadLayerPart",
+            "ecr:InitiateLayerUpload",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:PutImage"
           ],
           "Resource" : ["*"]
         },
@@ -361,7 +402,8 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_webapp" {
             "secretsmanager:ListSecretVersionIds"
           ],
           "Resource" : [
-            data.aws_secretsmanager_secret.secretsmanager_secret_webapp.arn
+            data.aws_secretsmanager_secret.secretsmanager_secret_webapp.arn,
+            data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn,
           ],
         },
         {
@@ -440,14 +482,14 @@ resource "aws_codepipeline" "aws_codepipeline_chat" {
       name             = "Source"
       category         = "Source"
       owner            = "AWS"
-      provider         = "ECR"
+      provider         = "S3"
       input_artifacts  = []
       output_artifacts = ["source"]
       version          = "1"
 
       configuration = {
-        "RepositoryName" : local.ecr_repository_name_chat,
-        "ImageTag" : var.ecr_repository_image_tag
+        "S3Bucket" : aws_s3_bucket.s3_bucket_codepipeline.bucket,
+        "S3ObjectKey" : aws_s3_object.empty.key,
       }
     }
   }
@@ -478,13 +520,28 @@ resource "aws_codepipeline" "aws_codepipeline_chat" {
             type : "PLAINTEXT"
           },
           {
-            name : "ECR_REGISTRY",
-            value : split("/", data.aws_ecr_repository.ecr_repository_chat.repository_url)[0],
+            name : "CONTAINER_REGISTRY_USERNAME",
+            value : "${data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn}:${"CONTAINER_REGISTRY_USERNAME"}::"
+            type : "SECRETS_MANAGER"
+          },
+          {
+            name : "CONTAINER_REGISTRY_TOKEN",
+            value : "${data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn}:${"CONTAINER_REGISTRY_TOKEN"}::"
+            type : "SECRETS_MANAGER"
+          },
+          {
+            name : "CONTAINER_REGISTRY_REPOSITORY",
+            value : var.container_registry_repository_chat,
             type : "PLAINTEXT"
           },
           {
-            name : "ECR_IMAGE_URI",
-            value : "${data.aws_ecr_repository.ecr_repository_chat.repository_url}:${var.ecr_repository_image_tag}",
+            name : "ECR_REGISTRY",
+            value : "${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com"
+            type : "PLAINTEXT"
+          },
+          {
+            name : "ECR_REPOSITORY",
+            value : data.aws_ecr_repository.ecr_repository_chat.repository_url,
             type : "PLAINTEXT"
           },
         ])
@@ -601,6 +658,12 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_chat" {
             "ecr:GetDownloadUrlForLayer",
             "ecr:BatchGetImage",
             "ecr:DescribeImages",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetAuthorizationToken",
+            "ecr:UploadLayerPart",
+            "ecr:InitiateLayerUpload",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:PutImage"
           ],
           "Resource" : ["*"]
         },
@@ -621,7 +684,8 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_chat" {
             "secretsmanager:ListSecretVersionIds"
           ],
           "Resource" : [
-            data.aws_secretsmanager_secret.secretsmanager_secret_chat.arn
+            data.aws_secretsmanager_secret.secretsmanager_secret_chat.arn,
+            data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn,
           ],
         },
         {
@@ -700,14 +764,14 @@ resource "aws_codepipeline" "aws_codepipeline_server" {
       name             = "Source"
       category         = "Source"
       owner            = "AWS"
-      provider         = "ECR"
+      provider         = "S3"
       input_artifacts  = []
       output_artifacts = ["source"]
       version          = "1"
 
       configuration = {
-        "RepositoryName" : local.ecr_repository_name_server,
-        "ImageTag" : var.ecr_repository_image_tag
+        "S3Bucket" : aws_s3_bucket.s3_bucket_codepipeline.bucket,
+        "S3ObjectKey" : aws_s3_object.empty.key,
       }
     }
   }
@@ -733,18 +797,33 @@ resource "aws_codepipeline" "aws_codepipeline_server" {
             type : "PLAINTEXT"
           },
           {
-            name : "ECR_REGISTRY",
-            value : split("/", data.aws_ecr_repository.ecr_repository_server.repository_url)[0],
-            type : "PLAINTEXT"
-          },
-          {
-            name : "ECR_IMAGE_URI",
-            value : "${data.aws_ecr_repository.ecr_repository_server.repository_url}:${var.ecr_repository_image_tag}",
-            type : "PLAINTEXT"
-          },
-          {
             name : "ECS_CONTAINER_NAME",
             value : "${local.namespace}-server",
+            type : "PLAINTEXT"
+          },
+          {
+            name : "CONTAINER_REGISTRY_USERNAME",
+            value : "${data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn}:${"CONTAINER_REGISTRY_USERNAME"}::"
+            type : "SECRETS_MANAGER"
+          },
+          {
+            name : "CONTAINER_REGISTRY_TOKEN",
+            value : "${data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn}:${"CONTAINER_REGISTRY_TOKEN"}::"
+            type : "SECRETS_MANAGER"
+          },
+          {
+            name : "CONTAINER_REGISTRY_REPOSITORY",
+            value : var.container_registry_repository_server,
+            type : "PLAINTEXT"
+          },
+          {
+            name : "ECR_REGISTRY",
+            value : "${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.region}.amazonaws.com"
+            type : "PLAINTEXT"
+          },
+          {
+            name : "ECR_REPOSITORY",
+            value : data.aws_ecr_repository.ecr_repository_server.repository_url,
             type : "PLAINTEXT"
           },
         ])
@@ -840,11 +919,29 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_server" {
         {
           "Effect" : "Allow",
           "Action" : [
+            "secretsmanager:GetResourcePolicy",
+            "secretsmanager:GetSecretValue",
+            "secretsmanager:DescribeSecret",
+            "secretsmanager:ListSecretVersionIds"
+          ],
+          "Resource" : [
+            data.aws_secretsmanager_secret.secretsmanager_secret_registry.arn,
+          ],
+        },
+        {
+          "Effect" : "Allow",
+          "Action" : [
             "ecr:GetAuthorizationToken",
             "ecr:BatchCheckLayerAvailability",
             "ecr:GetDownloadUrlForLayer",
             "ecr:BatchGetImage",
             "ecr:DescribeImages",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetAuthorizationToken",
+            "ecr:UploadLayerPart",
+            "ecr:InitiateLayerUpload",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:PutImage"
           ],
           "Resource" : ["*"]
         },
@@ -880,7 +977,6 @@ resource "aws_iam_policy" "iam_policy_policy_codepipeline_server" {
           ],
           "Resource" : "*",
         },
-
       ]
     })
 

@@ -632,28 +632,23 @@ resource "aws_iam_account_password_policy" "strict" {
   allow_users_to_change_password = true
 }
 
-################################################################################
-# ECR Repository
-################################################################################
+resource "aws_secretsmanager_secret" "this" {
+  name = "${local.namespace}-container-registry"
 
-resource "aws_ecr_registry_policy" "this" {
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Sid" : "ReplicationAccessCrossAccount",
-        "Effect" : "Allow",
-        "Principal" : {
-          "AWS" : "arn:aws:iam::${var.aws_account_id_root}:root"
-        },
-        "Action" : [
-          "ecr:CreateRepository",
-          "ecr:ReplicateImage"
-        ],
-        "Resource" : "arn:aws:ecr:${var.region}:${data.aws_caller_identity.current.account_id}:repository/*"
-      }
-    ]
-  })
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "this" {
+  secret_id     = aws_secretsmanager_secret.this.id
+  secret_string = jsonencode(
+    {
+      "CONTAINER_REGISTRY_USERNAME" : var.container_registry_username,
+      "CONTAINER_REGISTRY_TOKEN" : var.container_registry_token != "" ? var.container_registry_token : "<REPLACE_ME>",
+    })
+
+  lifecycle {
+    ignore_changes = [secret_string,]
+  }
 }
 
 ################################################################################
@@ -772,6 +767,7 @@ module "ci-cd" {
   secretsmanager_secret_id_webapp   = module.web.secretsmanager_secret_id
   secretsmanager_secret_id_chat     = module.chat.secretsmanager_secret_id
   secretsmanager_secret_id_server   = module.server.secretsmanager_secret_id
+  secretsmanager_secret_id_registry = aws_secretsmanager_secret.this.id
   ecr_repository_url_webapp         = module.web.ecr_repository_url
   ecr_repository_url_chat           = module.chat.ecr_repository_url
   ecr_repository_url_server         = module.server.ecr_repository_url
