@@ -29,8 +29,18 @@ data "aws_ecs_cluster" "this" {
   cluster_name = var.ecs_cluster_name
 }
 
+data "aws_secretsmanager_secret" "this" {
+  arn = aws_secretsmanager_secret_version.this.arn
+  depends_on = [
+    aws_secretsmanager_secret_version.this
+    ]
+}
+
 data "aws_secretsmanager_secret_version" "this" {
-  secret_id = aws_secretsmanager_secret.this.id
+  secret_id = data.aws_secretsmanager_secret.this.id
+  depends_on = [
+    data.aws_secretsmanager_secret_version.this
+    ]
 }
 
 ################################################################################
