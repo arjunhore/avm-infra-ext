@@ -82,3 +82,18 @@ variable "ecr_image_tag" {
   type        = string
   default     = "latest"
 }
+
+variable "firebase_project_id" {
+  description = "The firebase project id value from Firebase organisation"
+  type        = string
+}
+
+variable "firebase_private_key" {
+  description = "The firebase prvate key value from Firebase organisation"
+  type        = string
+}
+
+variable "firebase_client_email" {
+  description = "The firebase client email value from Firebase organisation"
+  type        = string
+}
