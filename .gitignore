@@ -37,3 +37,4 @@ terraform.rc
 # OS
 .DS_Store
 .env
+.terraform.lock.hcl
