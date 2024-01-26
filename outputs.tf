@@ -22,8 +22,3 @@ output "rds_master_password" {
   description = "The database master password"
   value       = nonsensitive(module.cluster.cluster_master_password)
 }
-
-output "" {
-  description = "The API Key will be used for providing initial access"
-  value       = nonsensitive(module.cluster.cluster_master_password)
-}
