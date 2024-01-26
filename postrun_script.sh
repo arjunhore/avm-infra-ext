@@ -12,20 +12,23 @@ fi
 echo "Enter the serverApiKey which is displayed in the terraform output:"
 read serverApiKey
 
+echo "Enter the email id of the user to deligate the access:"
+read userEmail
+
 json_payload='{
     "openAiApiKey": "'"$openAiApiKey"'",
     "cohereApiKey": "'"$cohereApiKey"'",
     "azureApiKey": "'"$azureApiKey"'",
     "skipOrgCreate": false,
     "organization": {
-        "name": "Terratest",
-        "domain": "Terratest",
-        "providerId": "saml.terratest",
-        "website": "terratest.com"
+        "name": "'"$CURLname"'",
+        "domain": "'"$CURLname"'",
+        "providerId": "'"$saml"'",
+        "website": "'"$website"'"
     },
     "users": [
         {
-            "email": "ratnam.sundaram@firebirds.ai"
+            "email": "'"$userEmail"'"
         }
     ]
 }'
