@@ -35,6 +35,6 @@ Follow these instructions after installing both Terraform and AWS CLI.
 $ sh deployment.sh
 ```
 
-2. Inspect the output.
+3. Inspect the output.
 
 At the end of a successful apply, a set of variables and their values shall be output, to be used in further provisioning application environments.
