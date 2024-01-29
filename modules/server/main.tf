@@ -5,6 +5,9 @@ locals {
   server_namespace    = "${local.namespace}-server"
   domain_name         = var.domain_name
   certificate_arn     = var.certificate_arn
+  firebase_project_id   = var.firebase_project_id
+  firebase_private_key  = var.firebase_private_key
+  firebase_client_email = var.firebase_client_email
 
   tags = {
     Name        = local.server_namespace
@@ -29,8 +32,18 @@ data "aws_ecs_cluster" "this" {
   cluster_name = var.ecs_cluster_name
 }
 
+data "aws_secretsmanager_secret" "this" {
+  arn = aws_secretsmanager_secret_version.this.arn
+  depends_on = [
+    aws_secretsmanager_secret_version.this
+    ]
+}
+
 data "aws_secretsmanager_secret_version" "this" {
-  secret_id = aws_secretsmanager_secret.this.id
+  secret_id = data.aws_secretsmanager_secret.this.id
+  depends_on = [
+    data.aws_secretsmanager_secret_version.this
+    ]
 }
 
 ################################################################################
@@ -442,9 +455,9 @@ resource "aws_secretsmanager_secret_version" "this" {
       "DB_VECTOR_URI" : "postgres://${data.aws_rds_cluster.this.master_username}:${var.rds_master_password}@${data.aws_rds_cluster.this.endpoint}:${data.aws_rds_cluster.this.port}/vectordb",
       "UI_HOST" : "https://${local.domain_name}"
       "API_KEY" : random_password.password[0].result,
-      "FIREBASE_PRIVATE_KEY" : "<REPLACE_ME>",
-      "FIREBASE_CLIENT_EMAIL" : "<REPLACE_ME>",
-      "FIREBASE_PROJECT_ID" : "<REPLACE_ME>",
+      "FIREBASE_PRIVATE_KEY" : "${local.firebase_private_key}",
+      "FIREBASE_CLIENT_EMAIL" : "${local.firebase_client_email}",
+      "FIREBASE_PROJECT_ID" : "${local.firebase_project_id}",
       "GOOGLE_DRIVE_CLIENT_ID" : "<REPLACE_ME>",
       "GOOGLE_DRIVE_CLIENT_SECRET" : "<REPLACE_ME>",
       "AWS_SES_ACCESS_KEY" : "<REPLACE_ME>",

@@ -4,7 +4,7 @@ locals {
   workspace_namespace = "avm-${terraform.workspace}-${var.environment}"
   domain_name         = var.domain_name
   certificate_arn     = var.certificate_arn
-
+  
   tags = {
     Name        = local.namespace
     Environment = var.environment
@@ -182,13 +182,13 @@ resource "aws_secretsmanager_secret_version" "this" {
   secret_id     = aws_secretsmanager_secret.this.id
   secret_string = jsonencode(
     {
-      "REACT_APP_FIREBASE_API_KEY" : "<REPLACE_ME>",
-      "REACT_APP_FIREBASE_AUTH_DOMAIN" : "<REPLACE_ME>",
-      "REACT_APP_FIREBASE_PROJECT_ID" : "<REPLACE_ME>",
-      "REACT_APP_FIREBASE_STORAGE_BUCKET" : "<REPLACE_ME>",
-      "REACT_APP_FIREBASE_MESSAGING_SENDER_ID" : "<REPLACE_ME>",
-      "REACT_APP_FIREBASE_APP_ID" : "<REPLACE_ME>",
-      "REACT_APP_FIREBASE_MEASUREMENT_ID" : "<REPLACE_ME>",
+      "REACT_APP_FIREBASE_API_KEY" : var.firebase_api_key,
+      "REACT_APP_FIREBASE_AUTH_DOMAIN" : var.firebase_auth_domain,
+      "REACT_APP_FIREBASE_PROJECT_ID" : var.firebase_project_id,
+      "REACT_APP_FIREBASE_STORAGE_BUCKET" : var.firebase_storage_bucket,
+      "REACT_APP_FIREBASE_MESSAGING_SENDER_ID" : var.firebase_messaging_sender_id,
+      "REACT_APP_FIREBASE_APP_ID" : var.firebase_app_id,
+      "REACT_APP_FIREBASE_MEASUREMENT_ID" : var.firebase_measurement_id,
     })
 
   lifecycle {

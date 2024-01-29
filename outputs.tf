@@ -22,3 +22,8 @@ output "rds_master_password" {
   description = "The database master password"
   value       = nonsensitive(module.cluster.cluster_master_password)
 }
+
+output "api_key" {
+  description = "The is the API Key used for the CURL command"
+  value = nonsensitive(module.server.api_key)
+}

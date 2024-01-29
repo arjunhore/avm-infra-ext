@@ -695,6 +695,9 @@ module "server" {
   ecs_cluster_name                = module.ecs.cluster_name
   rds_cluster_identifier          = module.cluster.cluster_id
   rds_master_password             = var.rds_master_password != "" ? var.rds_master_password : random_password.password[0].result
+  firebase_project_id             = var.firebase_project_id
+  firebase_private_key            = var.firebase_private_key
+  firebase_client_email           = var.firebase_client_email
 
   depends_on = [
     module.ecs,
@@ -715,6 +718,14 @@ module "web" {
   certificate_arn = module.acm_cloudfront.acm_certificate_arn
   route53_zone_id = aws_route53_zone.this.zone_id
   web_acl_arn     = module.acm_cloudfront.web_acl_cloudfront_arn
+  firebase_api_key = var.firebase_api_key
+  firebase_auth_domain  = var.firebase_auth_domain
+  firebase_project_id   = var.firebase_project_id
+  firebase_storage_bucket = var.firebase_storage_bucket
+  firebase_messaging_sender_id = var.firebase_messaging_sender_id
+  firebase_app_id = var.firebase_app_id
+  firebase_measurement_id = var.firebase_measurement_id
+
 
   depends_on = [
     module.acm_cloudfront,
@@ -734,6 +745,13 @@ module "chat" {
   certificate_arn = module.acm_cloudfront.acm_certificate_arn
   route53_zone_id = aws_route53_zone.this.zone_id
   web_acl_arn     = module.acm_cloudfront.web_acl_cloudfront_arn
+  firebase_api_key    = var.firebase_api_key
+  firebase_auth_domain  = var.firebase_auth_domain
+  firebase_project_id   = var.firebase_project_id
+  firebase_storage_bucket = var.firebase_storage_bucket
+  firebase_messaging_sender_id = var.firebase_messaging_sender_id
+  firebase_app_id = var.firebase_app_id
+  firebase_measurement_id = var.firebase_measurement_id
 
   depends_on = [
     module.acm_cloudfront,
