@@ -27,3 +27,7 @@ output "api_key" {
   description = "The is the API Key used for the CURL command"
   value = jsondecode(aws_secretsmanager_secret_version.this.secret_string)["API_KEY"]
 }
+
+output "account_id" {
+  value = local.account_id
+}

@@ -17,3 +17,7 @@ output "cloudfront_distribution_id" {
   description = "The CloudFront distribution ID"
   value       = module.cdn.cloudfront_distribution_id
 }
+
+output "account_id" {
+  value = local.account_id
+}

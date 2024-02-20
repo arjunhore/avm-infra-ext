@@ -8,6 +8,7 @@ locals {
   firebase_project_id   = var.firebase_project_id
   firebase_private_key  = var.firebase_private_key
   firebase_client_email = var.firebase_client_email
+  account_id          = data.aws_caller_identity.current.account_id
 
   tags = {
     Name        = local.server_namespace
@@ -253,17 +254,17 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_alarm_cpu_usage_low" {
 ################################################################################
 
 resource "aws_s3_bucket" "aws_s3_bucket_documents" {
-  bucket        = "${local.workspace_namespace}-documents"
+  bucket        = "${local.workspace_namespace}-documents-${local.account_id}"
   force_destroy = true
 }
 
 resource "aws_s3_bucket" "aws_s3_bucket_assets" {
-  bucket        = "${local.workspace_namespace}-assets"
+  bucket        = "${local.workspace_namespace}-assets-${local.account_id}"
   force_destroy = true
 }
 
 resource "aws_s3_bucket" "aws_s3_bucket_logs" {
-  bucket        = "${local.workspace_namespace}-bucket-access-logs"
+  bucket        = "${local.workspace_namespace}-bucket-access-logs-${local.account_id}"
   force_destroy = true
 }
 

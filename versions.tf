@@ -9,8 +9,12 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "avm-terraform-backend"
+    bucket = "avm-terraform-backend-${local.account_id}"
     key    = "terraform/terraform.tfstate"
     region = "us-east-1"
   }
+}
+
+locals {
+  account_id          = data.aws_caller_identity.current.account_id
 }

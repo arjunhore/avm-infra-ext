@@ -4,6 +4,7 @@ locals {
   workspace_namespace = "avm-${terraform.workspace}-${var.environment}"
   domain_name         = var.domain_name
   certificate_arn     = var.certificate_arn
+  account_id          = data.aws_caller_identity.current.account_id
   
   tags = {
     Name        = local.namespace
@@ -18,7 +19,7 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 
 resource "aws_s3_bucket" "aws_s3_bucket_web" {
-  bucket        = "${local.workspace_namespace}-web"
+  bucket        = "${local.workspace_namespace}-web-${local.account_id}"
   force_destroy = true
 }
 

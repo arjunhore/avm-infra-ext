@@ -27,3 +27,7 @@ output "api_key" {
   description = "The is the API Key used for the CURL command"
   value = nonsensitive(module.server.api_key)
 }
+
+output "account_id" {
+  value = local.account_id
+}

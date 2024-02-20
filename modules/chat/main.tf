@@ -11,6 +11,7 @@ locals {
   firebase_messaging_sender_id = var.firebase_messaging_sender_id
   firebase_app_id = var.firebase_app_id
   firebase_measurement_id = var.firebase_measurement_id
+  account_id          = data.aws_caller_identity.current.account_id
 
   tags = {
     Name        = local.namespace
@@ -25,7 +26,7 @@ data "aws_caller_identity" "current" {}
 ################################################################################
 
 resource "aws_s3_bucket" "aws_s3_bucket_chat" {
-  bucket        = "${local.workspace_namespace}-chat"
+  bucket        = "${local.workspace_namespace}-chat-${local.account_id}"
   force_destroy = true
 }
 
